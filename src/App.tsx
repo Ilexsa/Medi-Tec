@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
@@ -16,14 +16,25 @@ import { MedicalConsult } from './pages/MedicalConsult';
 import { MedicalAttention } from './pages/MedicalAttention';
 import { Reports } from './pages/Reports';
 import { History } from './pages/History';
+import { useAuth } from './context/AuthContext';
 export function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  const { user, isLoading, logout } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-900">
+        <div className="h-10 w-10 rounded-full border-4 border-white/20 border-t-white animate-spin" />
+      </div>
+    );
   }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <BrowserRouter>
-      <Layout onLogout={() => setIsLoggedIn(false)}>
+      <Layout onLogout={logout}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<Patients />} />

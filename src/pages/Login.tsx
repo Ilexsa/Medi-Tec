@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlusIcon, EyeIcon, EyeOffIcon, LoaderIcon } from 'lucide-react';
-interface LoginProps {
-  onLogin: () => void;
-}
-export function Login({ onLogin }: LoginProps) {
+import { useAuth } from '../context/AuthContext';
+
+export function Login() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!email || !password) {
@@ -19,10 +20,39 @@ export function Login({ onLogin }: LoginProps) {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const rawText = await response.text();
+      let result: any;
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        throw new Error('El servidor no devolvió un JSON válido.');
+      }
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'Credenciales inválidas');
+      }
+
+      const { access_token, user } = result.data ?? {};
+      if (!access_token || !user) {
+        throw new Error('Respuesta inesperada del servidor (faltan datos).');
+      }
+
+      login(user, access_token, rememberMe);
+    } catch (err: any) {
+      setError(err?.message || 'No se pudo iniciar sesión');
+    } finally {
       setIsLoading(false);
-      onLogin();
-    }, 1500);
+    }
   };
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center p-4">

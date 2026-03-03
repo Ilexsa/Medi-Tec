@@ -20,6 +20,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon } from
 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 interface NavItem {
   label: string;
   path: string;
@@ -130,9 +131,25 @@ interface SidebarProps {
   onLogout: () => void;
 }
 export function Sidebar({ onLogout }: SidebarProps) {
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const displayName =
+    (user?.nombres_completos as string) ||
+    (user?.nombre as string) ||
+    (user?.name as string) ||
+    (user?.email as string) ||
+    'Admin';
+  const displayEmail = (user?.email as string) || 'admin@medisys.com';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
@@ -221,12 +238,12 @@ export function Sidebar({ onLogout }: SidebarProps) {
       <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-              AD
+              {initials || 'AD'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-xs font-medium truncate">Admin</p>
+              <p className="text-white text-xs font-medium truncate">{displayName}</p>
               <p className="text-white/40 text-xs truncate">
-                admin@medisys.com
+                {displayEmail}
               </p>
             </div>
           </div>

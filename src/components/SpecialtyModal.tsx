@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+
 import { XIcon } from 'lucide-react';
 type SpecialtyFormData = {
   name: string;
@@ -9,85 +10,85 @@ type SpecialtyFormData = {
 type SpecialtyModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: SpecialtyFormData) => void;
+  onSave: (data: SpecialtyFormData) => void | Promise<void>;
   initialData?: Partial<SpecialtyFormData>;
   mode?: 'create' | 'edit';
 };
 const COLOR_OPTIONS = [
-{
-  label: 'Índigo',
-  value: 'indigo',
-  bg: 'bg-indigo-500'
-},
-{
-  label: 'Azul',
-  value: 'blue',
-  bg: 'bg-blue-500'
-},
-{
-  label: 'Verde',
-  value: 'green',
-  bg: 'bg-green-500'
-},
-{
-  label: 'Rojo',
-  value: 'red',
-  bg: 'bg-red-500'
-},
-{
-  label: 'Naranja',
-  value: 'orange',
-  bg: 'bg-orange-500'
-},
-{
-  label: 'Morado',
-  value: 'purple',
-  bg: 'bg-purple-500'
-},
-{
-  label: 'Rosa',
-  value: 'pink',
-  bg: 'bg-pink-500'
-},
-{
-  label: 'Cian',
-  value: 'cyan',
-  bg: 'bg-cyan-500'
-}];
+  {
+    label: 'Índigo',
+    value: 'indigo',
+    bg: 'bg-indigo-500'
+  },
+  {
+    label: 'Azul',
+    value: 'blue',
+    bg: 'bg-blue-500'
+  },
+  {
+    label: 'Verde',
+    value: 'green',
+    bg: 'bg-green-500'
+  },
+  {
+    label: 'Rojo',
+    value: 'red',
+    bg: 'bg-red-500'
+  },
+  {
+    label: 'Naranja',
+    value: 'orange',
+    bg: 'bg-orange-500'
+  },
+  {
+    label: 'Morado',
+    value: 'purple',
+    bg: 'bg-purple-500'
+  },
+  {
+    label: 'Rosa',
+    value: 'pink',
+    bg: 'bg-pink-500'
+  },
+  {
+    label: 'Cian',
+    value: 'cyan',
+    bg: 'bg-cyan-500'
+  }];
 
 const ICON_OPTIONS = [
-{
-  label: 'Corazón',
-  value: '❤️'
-},
-{
-  label: 'Cerebro',
-  value: '🧠'
-},
-{
-  label: 'Hueso',
-  value: '🦴'
-},
-{
-  label: 'Ojo',
-  value: '👁️'
-},
-{
-  label: 'Diente',
-  value: '🦷'
-},
-{
-  label: 'Bebé',
-  value: '👶'
-},
-{
-  label: 'Piel',
-  value: '🩺'
-},
-{
-  label: 'Pulmón',
-  value: '🫁'
-}];
+  {
+    label: 'Corazón',
+    value: '❤️'
+  },
+  {
+    label: 'Cerebro',
+    value: '🧠'
+  },
+  {
+    label: 'Hueso',
+    value: '🦴'
+  },
+  {
+    label: 'Ojo',
+    value: '👁️'
+  },
+  {
+    label: 'Diente',
+    value: '🦷'
+  },
+  {
+    label: 'Bebé',
+    value: '👶'
+  },
+  {
+    label: 'Piel',
+    value: '🩺'
+  },
+  {
+    label: 'Pulmón',
+    value: '🫁'
+  }];
 
 const DEFAULT_FORM: SpecialtyFormData = {
   name: '',
@@ -102,19 +103,23 @@ export function SpecialtyModal({
   initialData,
   mode = 'create'
 }: SpecialtyModalProps) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [form, setForm] = useState<SpecialtyFormData>(DEFAULT_FORM);
   const [errors, setErrors] = useState<
     Partial<Record<keyof SpecialtyFormData, string>>>(
-    {});
+      {});
   useEffect(() => {
     if (isOpen) {
+      setSaveError('');
+      setIsSaving(false);
       setForm(
         initialData ?
-        {
-          ...DEFAULT_FORM,
-          ...initialData
-        } :
-        DEFAULT_FORM
+          {
+            ...DEFAULT_FORM,
+            ...initialData
+          } :
+          DEFAULT_FORM
       );
       setErrors({});
     }
@@ -126,10 +131,18 @@ export function SpecialtyModal({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const handleSubmit = () => {
-    if (validate()) {
-      onSave(form);
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await onSave(form);
       onClose();
+    } catch (e: any) {
+      setSaveError(e?.message || 'No se pudo guardar la especialidad');
+    } finally {
+      setIsSaving(false);
     }
   };
   const handleChange = (field: keyof SpecialtyFormData, value: string) => {
@@ -138,10 +151,10 @@ export function SpecialtyModal({
       [field]: value
     }));
     if (errors[field])
-    setErrors((prev) => ({
-      ...prev,
-      [field]: undefined
-    }));
+      setErrors((prev) => ({
+        ...prev,
+        [field]: undefined
+      }));
   };
   return (
     <div
@@ -152,7 +165,6 @@ export function SpecialtyModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="specialty-modal-title">
-
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -173,6 +185,11 @@ export function SpecialtyModal({
 
         {/* Body */}
         <div className="p-6 space-y-4">
+                {saveError && (
+        <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
+          {saveError}
+        </div>
+      )}
           {/* Name */}
           <div>
             <label
@@ -190,7 +207,7 @@ export function SpecialtyModal({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.name ? 'border-red-400 bg-red-50' : 'border-gray-300'}`} />
 
             {errors.name &&
-            <p className="mt-1 text-xs text-red-500">{errors.name}</p>
+              <p className="mt-1 text-xs text-red-500">{errors.name}</p>
             }
           </div>
 
@@ -219,12 +236,12 @@ export function SpecialtyModal({
             </label>
             <div className="flex flex-wrap gap-2">
               {ICON_OPTIONS.map((opt) =>
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => handleChange('icon', opt.value)}
-                title={opt.label}
-                className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all border-2 ${form.icon === opt.value ? 'border-indigo-500 bg-indigo-50 scale-110' : 'border-gray-200 hover:border-gray-300 bg-gray-50'}`}>
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleChange('icon', opt.value)}
+                  title={opt.label}
+                  className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all border-2 ${form.icon === opt.value ? 'border-indigo-500 bg-indigo-50 scale-110' : 'border-gray-200 hover:border-gray-300 bg-gray-50'}`}>
 
                   {opt.value}
                 </button>
@@ -239,13 +256,13 @@ export function SpecialtyModal({
             </label>
             <div className="flex flex-wrap gap-2">
               {COLOR_OPTIONS.map((opt) =>
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => handleChange('color', opt.value)}
-                title={opt.label}
-                className={`w-8 h-8 rounded-full ${opt.bg} transition-all ${form.color === opt.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
-                aria-label={opt.label} />
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleChange('color', opt.value)}
+                  title={opt.label}
+                  className={`w-8 h-8 rounded-full ${opt.bg} transition-all ${form.color === opt.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
+                  aria-label={opt.label} />
 
               )}
             </div>
@@ -262,9 +279,11 @@ export function SpecialtyModal({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
-
-            {mode === 'edit' ? 'Guardar cambios' : 'Guardar'}
+            disabled={isSaving}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${isSaving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+          >
+            {isSaving ? 'Guardando...' : mode === 'edit' ? 'Guardar cambios' : 'Guardar'}
           </button>
         </div>
       </div>
