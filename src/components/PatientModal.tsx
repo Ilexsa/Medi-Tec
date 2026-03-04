@@ -23,7 +23,6 @@ export interface Patient {
   numeroSeguro: string;
   urlFotoPerfil: string;
   notas: string;
-  especialidad?: string;
   estado?: string;
   edad?: number;
 }
@@ -55,7 +54,6 @@ const emptyPatient: Omit<Patient, 'id'> = {
   numeroSeguro: '',
   urlFotoPerfil: '',
   notas: '',
-  especialidad: '',
   estado: 'Activo'
 };
 export function PatientModal({ patient, onClose, onSave }: PatientModalProps) {
@@ -201,15 +199,16 @@ export function PatientModal({ patient, onClose, onSave }: PatientModalProps) {
                 Género *
               </label>
               <select
-                value={form.genero}
+                name="genero"
+                value={form.genero ?? 'other'}
                 onChange={(e) => setForm((p) => ({ ...p, genero: e.target.value as any }))}
                 className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.genero ? 'border-red-400' : 'border-slate-200'
                   }`}
               >
                 <option value="">Seleccionar...</option>
-                <option value="male">Masculino</option>
-                <option value="female">Femenino</option>
-                <option value="other">Otro</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Otro">Otro</option>
               </select>
               {errors.genero && (
                 <p className="text-red-500 text-xs mt-0.5">{errors.genero}</p>
@@ -276,7 +275,38 @@ export function PatientModal({ patient, onClose, onSave }: PatientModalProps) {
           {/* Ciudad / Tipo sangre */}
           <div className="grid grid-cols-2 gap-4">
             {inp('ciudad', 'Ciudad')}
-            {inp('tipoSangre', 'Tipo de sangre (ej: O+, AB-)')}
+                       <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Tipo de sangre *
+              </label>
+              <select
+                value={form.tipoSangre}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    tipoSangre: e.target.value
+                  })
+                }
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.tipoSangre ? 'border-red-400' : 'border-slate-200'
+                  }`}
+              >
+                <option value="">Seleccionar...</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="DESCONOCIDO">Desconocido</option>
+              </select>
+              {errors.tipoSangre && (
+                <p className="text-red-500 text-xs mt-0.5">
+                  {errors.tipoSangre}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Alergias / Condiciones crónicas */}

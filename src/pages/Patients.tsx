@@ -75,7 +75,7 @@ function mapPatientToCreateApi(p: Patient): PatientCreateApi {
     celular: emptyToNull(p.celular),
     direccion: emptyToNull(p.direccion),
     ciudad: emptyToNull(p.ciudad),
-    tipo_sangre: emptyToNull(p.tipoSangre),
+    tipo_sangre: p.tipoSangre ?? null,
     alergias: emptyToNull(p.alergias),
     condiciones_cronicas: emptyToNull(p.condicionesCronicas),
     contacto_emergencia_nombre: emptyToNull(p.contactoEmergenciaNombre),
