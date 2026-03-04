@@ -4,69 +4,85 @@ import {
   SearchIcon,
   PencilIcon,
   TrashIcon,
-  UserCheckIcon } from
-'lucide-react';
+  UserCheckIcon
+} from
+  'lucide-react';
 import { DoctorModal, Doctor } from '../components/DoctorModal';
 const initialDoctors: Doctor[] = [
-{
-  id: 1,
-  nombre: 'Carlos',
-  apellido: 'Mendoza',
-  cedula: '1234567890',
-  especialidad: 'Medicina General',
-  telefono: '0991234567',
-  email: 'cmendoza@medisys.com',
-  horario: 'Lun-Vie 08:00-17:00'
-},
-{
-  id: 2,
-  nombre: 'Ana',
-  apellido: 'Torres',
-  cedula: '0987654321',
-  especialidad: 'Pediatría',
-  telefono: '0997654321',
-  email: 'atorres@medisys.com',
-  horario: 'Lun-Jue 09:00-16:00'
-},
-{
-  id: 3,
-  nombre: 'Roberto',
-  apellido: 'Vega',
-  cedula: '1122334455',
-  especialidad: 'Odontología',
-  telefono: '0993344556',
-  email: 'rvega@medisys.com',
-  horario: 'Mar-Sáb 08:00-14:00'
-}];
+  {
+    id: 1,
+    nombre: 'Carlos',
+    apellido: 'Mendoza',
+    cedula: '1234567890',
+    especialidad: 'Medicina General',
+    telefono: '0991234567',
+    email: 'cmendoza@medisys.com',
+    horario: 'Lun-Vie 08:00-17:00'
+  },
+  {
+    id: 2,
+    nombre: 'Ana',
+    apellido: 'Torres',
+    cedula: '0987654321',
+    especialidad: 'Pediatría',
+    telefono: '0997654321',
+    email: 'atorres@medisys.com',
+    horario: 'Lun-Jue 09:00-16:00'
+  },
+  {
+    id: 3,
+    nombre: 'Roberto',
+    apellido: 'Vega',
+    cedula: '1122334455',
+    especialidad: 'Odontología',
+    telefono: '0993344556',
+    email: 'rvega@medisys.com',
+    horario: 'Mar-Sáb 08:00-14:00'
+  }];
 
 const SPECIALTIES = [
-'Medicina General',
-'Pediatría',
-'Odontología',
-'Cardiología',
-'Ginecología',
-'Traumatología',
-'Dermatología',
-'Neurología'];
+  'Medicina General',
+  'Pediatría',
+  'Odontología',
+  'Cardiología',
+  'Ginecología',
+  'Traumatología',
+  'Dermatología',
+  'Neurología'];
+
 
 export function Doctors() {
   const [doctors, setDoctors] = useState<Doctor[]>(initialDoctors);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
   const filtered = doctors.filter(
     (d) =>
-    `${d.nombre} ${d.apellido}`.
-    toLowerCase().
-    includes(search.toLowerCase()) ||
-    d.cedula.includes(search) ||
-    d.especialidad.toLowerCase().includes(search.toLowerCase())
+      `${d.nombre} ${d.apellido}`.
+        toLowerCase().
+        includes(search.toLowerCase()) ||
+      d.cedula.includes(search) ||
+      d.especialidad.toLowerCase().includes(search.toLowerCase())
   );
+  const fetchDoctors = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getDoctors({ page: 1, limit: 20 });
+      setDoctors(res.data);          // <-- si guardas API directo
+      setPagination(res.pagination); // <-- opcional
+    } catch (e: any) {
+      setError(e?.message || 'No se pudieron cargar los médicos');
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleSave = (doctor: Doctor) => {
     setDoctors((prev) =>
-    prev.find((d) => d.id === doctor.id) ?
-    prev.map((d) => d.id === doctor.id ? doctor : d) :
-    [...prev, doctor]
+      prev.find((d) => d.id === doctor.id) ?
+        prev.map((d) => d.id === doctor.id ? doctor : d) :
+        [...prev, doctor]
     );
     setModalOpen(false);
     setEditingDoctor(null);
@@ -150,19 +166,19 @@ export function Doctors() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filtered.length === 0 ?
-              <tr>
+                <tr>
                   <td
-                  colSpan={7}
-                  className="text-center py-12 text-slate-400 text-sm">
+                    colSpan={7}
+                    className="text-center py-12 text-slate-400 text-sm">
 
                     No se encontraron médicos
                   </td>
                 </tr> :
 
-              filtered.map((doctor) =>
-              <tr
-                key={doctor.id}
-                className="hover:bg-slate-50/50 transition-colors">
+                filtered.map((doctor) =>
+                  <tr
+                    key={doctor.id}
+                    className="hover:bg-slate-50/50 transition-colors">
 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -195,23 +211,23 @@ export function Doctors() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                      onClick={() => handleEdit(doctor)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Editar">
+                          onClick={() => handleEdit(doctor)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar">
 
                           <PencilIcon size={15} />
                         </button>
                         <button
-                      onClick={() => handleDelete(doctor.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Eliminar">
+                          onClick={() => handleDelete(doctor.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar">
 
                           <TrashIcon size={15} />
                         </button>
                       </div>
                     </td>
                   </tr>
-              )
+                )
               }
             </tbody>
           </table>
@@ -219,14 +235,14 @@ export function Doctors() {
       </div>
 
       {modalOpen &&
-      <DoctorModal
-        doctor={editingDoctor}
-        specialties={SPECIALTIES}
-        onClose={() => {
-          setModalOpen(false);
-          setEditingDoctor(null);
-        }}
-        onSave={handleSave} />
+        <DoctorModal
+          doctor={editingDoctor}
+          specialties={SPECIALTIES}
+          onClose={() => {
+            setModalOpen(false);
+            setEditingDoctor(null);
+          }}
+          onSave={handleSave} />
 
       }
     </div>);

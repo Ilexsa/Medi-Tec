@@ -75,56 +75,7 @@ const COLOR_CLASSES: Record<
     light: 'bg-cyan-50'
   }
 };
-const INITIAL_SPECIALTIES: Specialty[] = [
-  {
-    id: 1,
-    name: 'Cardiología',
-    description:
-      'Diagnóstico y tratamiento de enfermedades del corazón y sistema cardiovascular.',
-    color: 'red',
-    icon: '❤️',
-    doctorCount: 3
-  },
-  {
-    id: 2,
-    name: 'Neurología',
-    description: 'Trastornos del sistema nervioso central y periférico.',
-    color: 'purple',
-    icon: '🧠',
-    doctorCount: 2
-  },
-  {
-    id: 3,
-    name: 'Pediatría',
-    description: 'Atención médica integral para niños y adolescentes.',
-    color: 'blue',
-    icon: '👶',
-    doctorCount: 4
-  },
-  {
-    id: 4,
-    name: 'Traumatología',
-    description: 'Lesiones del sistema músculo-esquelético.',
-    color: 'orange',
-    icon: '🦴',
-    doctorCount: 2
-  },
-  {
-    id: 5,
-    name: 'Oncología',
-    description: 'Diagnóstico y tratamiento del cáncer.',
-    color: 'green',
-    icon: '🔬',
-    doctorCount: 2
-  },
-  {
-    id: 6,
-    name: 'Ginecología',
-    description: 'Salud del sistema reproductor femenino.',
-    color: 'pink',
-    icon: '🌸',
-    doctorCount: 3
-  }];
+
 
 type SpecialtyFormData = {
   name: string;
