@@ -42,17 +42,20 @@ export interface HorarioUpdatePayload {
 }
 
 // --- Interfaces de Respuestas ---
+// CORRECCIÓN: El backend envía 'success' (boolean), no 'status'
 interface BaseResponse<T> {
-  status: string;
+  success: boolean;
   data: T;
   message?: string;
+  error?: string;
 }
 
 // --- Funciones del Servicio ---
 
 export async function getHorarios(medicoId: number): Promise<HorarioApi[]> {
   const res = await apiFetch<BaseResponse<HorarioApi[]>>(`/medicos/${medicoId}/horarios`);
-  if (res.status !== 'OK') throw new Error(res.message || 'Error al obtener horarios');
+  // CORRECCIÓN: Validar res.success
+  if (!res.success) throw new Error(res.error || res.message || 'Error al obtener horarios');
   return res.data;
 }
 
@@ -61,21 +64,25 @@ export async function createHorario(medicoId: number, payload: HorarioCreatePayl
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  if (res.status !== 'success') throw new Error(res.message || 'Error al crear horario');
+  // CORRECCIÓN: Validar res.success
+  if (!res.success) throw new Error(res.error || res.message || 'Error al crear horario');
   return res.data;
 }
 
 export async function updateHorario(medicoId: number, horarioId: number, payload: HorarioUpdatePayload): Promise<void> {
-  const res = await apiFetch<BaseResponse<null>>(`/medicos/${medicoId}/horarios/${horarioId}`, {
+  // Nota: Algunos endpoints de actualización devuelven null en la data
+  const res = await apiFetch<BaseResponse<any>>(`/medicos/${medicoId}/horarios/${horarioId}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
-  if (res.status !== 'success') throw new Error(res.message || 'Error al actualizar horario');
+  // CORRECCIÓN: Validar res.success
+  if (!res.success) throw new Error(res.error || res.message || 'Error al actualizar horario');
 }
 
 export async function deleteHorario(medicoId: number, horarioId: number): Promise<void> {
-  const res = await apiFetch<BaseResponse<null>>(`/medicos/${medicoId}/horarios/${horarioId}`, {
+  const res = await apiFetch<BaseResponse<any>>(`/medicos/${medicoId}/horarios/${horarioId}`, {
     method: 'DELETE',
   });
-  if (res.status !== 'success') throw new Error(res.message || 'Error al eliminar horario');
+  // CORRECCIÓN: Validar res.success
+  if (!res.success) throw new Error(res.error || res.message || 'Error al eliminar horario');
 }
