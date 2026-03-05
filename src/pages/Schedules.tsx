@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarIcon,
@@ -10,32 +10,23 @@ import {
   CalendarPlusIcon,
   CheckCircle2Icon,
 } from 'lucide-react'
-interface Doctor {
+import { getDoctors } from '../services/doctors'
+import {
+  createHorario,
+  deleteHorario,
+  getHorarios,
+  updateHorario,
+} from '../services/schedules'
+import type { HorarioApi } from '../services/schedules'
+import { generarTurnos, generarTurnosAdicionales } from '../services/turns'
+
+type DoctorOption = {
   id: number
   nombre: string
   apellido: string
   especialidad: string
+  especialidad_id: number
 }
-const DOCTORS: Doctor[] = [
-  {
-    id: 1,
-    nombre: 'Carlos',
-    apellido: 'Mendoza',
-    especialidad: 'Medicina General',
-  },
-  {
-    id: 2,
-    nombre: 'Ana',
-    apellido: 'Torres',
-    especialidad: 'Pediatría',
-  },
-  {
-    id: 3,
-    nombre: 'Roberto',
-    apellido: 'Vega',
-    especialidad: 'Odontología',
-  },
-]
 const DAYS = [
   {
     key: 'lunes',
@@ -66,6 +57,46 @@ const DAYS = [
     label: 'Domingo',
   },
 ]
+
+const DAY_TO_NUM: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+}
+
+const NUM_TO_DAY: Record<number, string> = Object.fromEntries(
+  Object.entries(DAY_TO_NUM).map(([k, v]) => [v, k]),
+)
+
+function toHHMM(apiTime: string): string {
+  // "09:00:00" -> "09:00"
+  return (apiTime || '').slice(0, 5)
+}
+
+function toApiTime(hhmm: string): string {
+  // "09:00" -> "09:00:00"
+  const t = (hhmm || '').trim()
+  if (!t) return '00:00:00'
+  return t.length === 5 ? `${t}:00` : t
+}
+
+function timeToMinutes(hhmm: string): number {
+  const [h, m] = (hhmm || '0:0').split(':')
+  return Number(h) * 60 + Number(m)
+}
+
+function calcDuracionSlot(startHHMM: string, endHHMM: string, slots: number): number {
+  const start = timeToMinutes(startHHMM)
+  const end = timeToMinutes(endHHMM)
+  const windowMin = Math.max(0, end - start)
+  if (windowMin <= 0) return 30
+  const s = Math.max(1, slots)
+  return Math.max(5, Math.floor(windowMin / s))
+}
 interface DaySchedule {
   enabled: boolean
   startTime: string
@@ -110,6 +141,17 @@ export function Schedules() {
   const [activeTab, setActiveTab] = useState<'schedule' | 'additional'>(
     'schedule',
   )
+
+  // API data
+  const [doctors, setDoctors] = useState<DoctorOption[]>([])
+  const [loadingDoctors, setLoadingDoctors] = useState(false)
+  const [doctorsError, setDoctorsError] = useState('')
+
+  const [horarios, setHorarios] = useState<HorarioApi[]>([])
+  const [loadingHorarios, setLoadingHorarios] = useState(false)
+  const [horariosError, setHorariosError] = useState('')
+
+  const [saving, setSaving] = useState(false)
   // Tab 1 State
   const [selectedDoctor, setSelectedDoctor] = useState<number | ''>('')
   const [startDate, setStartDate] = useState('')
@@ -133,6 +175,68 @@ export function Schedules() {
   const [addEndTime, setAddEndTime] = useState('18:00')
   const [addSlots, setAddSlots] = useState<number>(10)
   const [additionalSlots, setAdditionalSlots] = useState<AdditionalSlot[]>([])
+
+  useEffect(() => {
+    const run = async () => {
+      setLoadingDoctors(true)
+      setDoctorsError('')
+      try {
+        const res = await getDoctors({ page: 1, limit: 200 })
+        const mapped: DoctorOption[] = (res.data || []).map((d) => ({
+          id: d.id,
+          nombre: d.nombres || '',
+          apellido: d.apellidos || '',
+          especialidad: d.nombre_especialidad || 'Sin especialidad',
+          especialidad_id: d.especialidad_id,
+        }))
+        setDoctors(mapped)
+      } catch (e: any) {
+        setDoctorsError(e?.message || 'No se pudieron cargar los médicos')
+      } finally {
+        setLoadingDoctors(false)
+      }
+    }
+    run()
+  }, [])
+
+  const fetchHorarios = async (medicoId: number) => {
+    setLoadingHorarios(true)
+    setHorariosError('')
+    try {
+      const list = await getHorarios(medicoId)
+      setHorarios(list)
+
+      // Prefill week schedule (1 bloque por día). Si hay más de uno, toma el primero.
+      const nextWeek: WeekSchedule = JSON.parse(JSON.stringify(defaultWeek))
+      for (const h of list) {
+        const dayKey = NUM_TO_DAY[h.dia_semana]
+        if (!dayKey || !nextWeek[dayKey]) continue
+        nextWeek[dayKey] = {
+          enabled: !!h.activo,
+          startTime: toHHMM(h.hora_inicio),
+          endTime: toHHMM(h.hora_fin),
+          slots: h.num_turnos_automaticos ?? 0,
+        }
+      }
+      setSchedule(nextWeek)
+    } catch (e: any) {
+      setHorariosError(e?.message || 'No se pudieron cargar los horarios')
+      setHorarios([])
+    } finally {
+      setLoadingHorarios(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedDoctor) {
+      setHorarios([])
+      setHorariosError('')
+      setSchedule(defaultWeek)
+      return
+    }
+    fetchHorarios(Number(selectedDoctor))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDoctor])
   // Derived calculations for Tab 1
   const activeDaysCount = Object.values(schedule).filter(
     (d) => d.enabled,
@@ -160,7 +264,7 @@ export function Schedules() {
       },
     }))
   }
-  const handleGenerateSchedule = () => {
+  const handleGenerateSchedule = async () => {
     if (!selectedDoctor || !startDate || !endDate) {
       alert('Por favor complete el médico y las fechas de inicio y vigencia.')
       return
@@ -169,30 +273,107 @@ export function Schedules() {
       alert('La fecha de vigencia debe ser posterior a la fecha de inicio.')
       return
     }
-    const doc = DOCTORS.find((d) => d.id === selectedDoctor)
-    if (!doc) return
-    const newSchedule: SavedSchedule = {
-      id: Date.now(),
-      doctorId: doc.id,
-      doctorName: `Dr. ${doc.nombre} ${doc.apellido}`,
-      startDate,
-      endDate,
-      totalSlots: estimatedTotalSlots,
-      status: 'Activo',
+
+    const medicoId = Number(selectedDoctor)
+    const doc = doctors.find((d) => d.id === medicoId)
+    if (!doc) {
+      alert('No se encontró el médico seleccionado.')
+      return
     }
-    setSavedSchedules((prev) => [newSchedule, ...prev])
-    // Reset form
-    setSelectedDoctor('')
-    setStartDate('')
-    setEndDate('')
-    setSchedule(defaultWeek)
+
+    setSaving(true)
+    try {
+      // 1) Upsert de horarios por día
+      const existingByDay = new Map<number, HorarioApi>()
+      for (const h of horarios) {
+        if (!existingByDay.has(h.dia_semana)) existingByDay.set(h.dia_semana, h)
+      }
+
+      const ops: Promise<any>[] = []
+      for (const d of DAYS) {
+        const dayNum = DAY_TO_NUM[d.key]
+        const ds = schedule[d.key]
+        const existing = existingByDay.get(dayNum)
+
+        if (ds.enabled) {
+          const duracion_slot = calcDuracionSlot(ds.startTime, ds.endTime, ds.slots)
+          const common = {
+            hora_inicio: toApiTime(ds.startTime),
+            hora_fin: toApiTime(ds.endTime),
+            duracion_slot,
+            intervalo_descanso: 0,
+            fecha_vigencia_desde: startDate,
+            fecha_vigencia_hasta: endDate,
+            activo: true,
+          }
+
+          if (existing) {
+            ops.push(updateHorario(medicoId, existing.id, common))
+          } else {
+            ops.push(
+              createHorario(medicoId, {
+                dia_semana: dayNum,
+                ...common,
+                especialidad_id: doc.especialidad_id,
+                num_turnos_automaticos: Math.max(0, ds.slots),
+              }),
+            )
+          }
+        } else if (existing && existing.activo) {
+          // Si lo apagas desde la UI, lo marcamos como inactivo
+          ops.push(updateHorario(medicoId, existing.id, { activo: false }))
+        }
+      }
+
+      await Promise.all(ops)
+      await fetchHorarios(medicoId)
+
+      // 2) Generar turnos masivos en el rango (usa /turnos/generar)
+      const firstEnabled = DAYS.find((d) => schedule[d.key].enabled)
+      const duracion_slot = firstEnabled
+        ? calcDuracionSlot(
+            schedule[firstEnabled.key].startTime,
+            schedule[firstEnabled.key].endTime,
+            schedule[firstEnabled.key].slots,
+          )
+        : 30
+
+      const sobrescribir = confirm(
+        '¿Deseas sobrescribir (recrear) los turnos DISPONIBLES en el rango seleccionado?\n\nSi le das Cancelar, se intentará generar sin sobrescribir.',
+      )
+
+      const gen = await generarTurnos({
+        medico_id: medicoId,
+        fecha_inicio: startDate,
+        fecha_fin: endDate,
+        duracion_slot,
+        sobrescribir,
+      })
+
+      const newSchedule: SavedSchedule = {
+        id: Date.now(),
+        doctorId: doc.id,
+        doctorName: `Dr. ${doc.nombre} ${doc.apellido}`,
+        startDate,
+        endDate,
+        totalSlots: gen.turnos_generados ?? estimatedTotalSlots,
+        status: 'Activo',
+      }
+      setSavedSchedules((prev) => [newSchedule, ...prev])
+
+      alert('Horarios guardados y turnos generados correctamente.')
+    } catch (e: any) {
+      alert(e?.message || 'Error al guardar/generar')
+    } finally {
+      setSaving(false)
+    }
   }
   const handleDeleteSchedule = (id: number) => {
     if (confirm('¿Está seguro de eliminar esta configuración de horario?')) {
       setSavedSchedules((prev) => prev.filter((s) => s.id !== id))
     }
   }
-  const handleAddAdditionalSlots = () => {
+  const handleAddAdditionalSlots = async () => {
     if (
       !addSelectedDoctor ||
       !addDate ||
@@ -203,24 +384,39 @@ export function Schedules() {
       alert('Por favor complete todos los campos correctamente.')
       return
     }
-    const doc = DOCTORS.find((d) => d.id === addSelectedDoctor)
-    if (!doc) return
-    const newSlot: AdditionalSlot = {
-      id: Date.now(),
-      doctorId: doc.id,
-      doctorName: `Dr. ${doc.nombre} ${doc.apellido}`,
-      date: addDate,
-      startTime: addStartTime,
-      endTime: addEndTime,
-      slots: addSlots,
+    const medicoId = Number(addSelectedDoctor)
+    const doc = doctors.find((d) => d.id === medicoId)
+    if (!doc) {
+      alert('No se encontró el médico seleccionado.')
+      return
     }
-    setAdditionalSlots((prev) => [newSlot, ...prev])
-    // Reset form
-    setAddSelectedDoctor('')
-    setAddDate('')
-    setAddStartTime('15:00')
-    setAddEndTime('18:00')
-    setAddSlots(10)
+
+    try {
+      const res = await generarTurnosAdicionales({
+        medico_id: medicoId,
+        fecha: addDate,
+        cantidad: addSlots,
+      })
+      const newSlot: AdditionalSlot = {
+        id: Date.now(),
+        doctorId: doc.id,
+        doctorName: `Dr. ${doc.nombre} ${doc.apellido}`,
+        date: addDate,
+        startTime: addStartTime,
+        endTime: addEndTime,
+        slots: res.turnos_generados ?? addSlots,
+      }
+      setAdditionalSlots((prev) => [newSlot, ...prev])
+      // Reset form
+      setAddSelectedDoctor('')
+      setAddDate('')
+      setAddStartTime('15:00')
+      setAddEndTime('18:00')
+      setAddSlots(10)
+      alert('Turnos adicionales generados.')
+    } catch (e: any) {
+      alert(e?.message || 'Error al generar turnos adicionales')
+    }
   }
   const handleDeleteAdditionalSlot = (id: number) => {
     if (confirm('¿Está seguro de eliminar estos turnos adicionales?')) {
@@ -355,11 +551,21 @@ export function Schedules() {
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="">-- Seleccione un médico --</option>
-                    {DOCTORS.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        Dr. {d.nombre} {d.apellido} ({d.especialidad})
+                    {loadingDoctors ? (
+                      <option value="" disabled>
+                        Cargando médicos...
                       </option>
-                    ))}
+                    ) : doctorsError ? (
+                      <option value="" disabled>
+                        {doctorsError}
+                      </option>
+                    ) : (
+                      doctors.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          Dr. {d.nombre} {d.apellido} ({d.especialidad})
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
                 <div>
@@ -537,14 +743,108 @@ export function Schedules() {
                   </div>
                   <button
                     onClick={handleGenerateSchedule}
+                    disabled={saving}
                     className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-3 bg-blue-800 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
                   >
                     <CalendarPlusIcon className="w-5 h-5" />
-                    Generar Horario
+                    {saving ? 'Guardando / Generando...' : 'Guardar y Generar Turnos'}
                   </button>
                 </motion.div>
               </div>
             </div>
+
+            {/* Horarios en API (del médico seleccionado) */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+            >
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-slate-800">
+                  Horarios (API)
+                </h2>
+                {selectedDoctor && (
+                  <button
+                    onClick={() => fetchHorarios(Number(selectedDoctor))}
+                    className="text-sm font-medium text-blue-700 hover:text-blue-800"
+                  >
+                    Refrescar
+                  </button>
+                )}
+              </div>
+
+              {!selectedDoctor ? (
+                <div className="p-6 text-sm text-slate-500">Selecciona un médico para ver sus horarios.</div>
+              ) : loadingHorarios ? (
+                <div className="p-6 text-sm text-slate-500">Cargando horarios...</div>
+              ) : horariosError ? (
+                <div className="p-6 text-sm text-red-600">{horariosError}</div>
+              ) : horarios.length === 0 ? (
+                <div className="p-6 text-sm text-slate-500">Este médico aún no tiene horarios configurados.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Día</th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Horario</th>
+                        <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Duración</th>
+                        <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Turnos auto</th>
+                        <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Activo</th>
+                        <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {horarios
+                        .slice()
+                        .sort((a, b) => a.dia_semana - b.dia_semana)
+                        .map((h) => (
+                          <tr key={h.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-5 py-3.5 text-sm text-slate-800 font-medium">
+                              {DAYS.find((d) => d.key === NUM_TO_DAY[h.dia_semana])?.label || h.dia_semana}
+                            </td>
+                            <td className="px-5 py-3.5 text-sm text-slate-600">
+                              {toHHMM(h.hora_inicio)} - {toHHMM(h.hora_fin)}
+                            </td>
+                            <td className="px-5 py-3.5 text-sm text-center text-slate-600">
+                              {h.duracion_slot} min
+                            </td>
+                            <td className="px-5 py-3.5 text-sm text-center text-slate-600">
+                              {h.num_turnos_automaticos ?? '-'}
+                            </td>
+                            <td className="px-5 py-3.5 text-center">
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${h.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}
+                              >
+                                {h.activo ? 'Sí' : 'No'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              <button
+                                onClick={async () => {
+                                  if (!selectedDoctor) return
+                                  if (!confirm('¿Eliminar este horario?')) return
+                                  try {
+                                    await deleteHorario(Number(selectedDoctor), h.id)
+                                    await fetchHorarios(Number(selectedDoctor))
+                                  } catch (e: any) {
+                                    alert(e?.message || 'Error al eliminar horario')
+                                  }
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Eliminar horario"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </motion.div>
 
             {/* Saved Schedules Table */}
             <motion.div
@@ -700,11 +1000,21 @@ export function Schedules() {
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     >
                       <option value="">-- Seleccione un médico --</option>
-                      {DOCTORS.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          Dr. {d.nombre} {d.apellido}
+                      {loadingDoctors ? (
+                        <option value="" disabled>
+                          Cargando médicos...
                         </option>
-                      ))}
+                      ) : doctorsError ? (
+                        <option value="" disabled>
+                          {doctorsError}
+                        </option>
+                      ) : (
+                        doctors.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            Dr. {d.nombre} {d.apellido}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>
