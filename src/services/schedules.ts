@@ -52,7 +52,7 @@ interface BaseResponse<T> {
 
 export async function getHorarios(medicoId: number): Promise<HorarioApi[]> {
   const res = await apiFetch<BaseResponse<HorarioApi[]>>(`/medicos/${medicoId}/horarios`);
-  if (res.status !== 'success') throw new Error(res.message || 'Error al obtener horarios');
+  if (res.status !== 'OK') throw new Error(res.message || 'Error al obtener horarios');
   return res.data;
 }
 
