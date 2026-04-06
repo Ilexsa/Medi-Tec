@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   PrinterIcon,
   FileTextIcon,
@@ -15,6 +15,8 @@ import {
   DownloadIcon,
   RefreshCwIcon } from
 'lucide-react';
+import { listAppointments, CitaApi } from '../services/appointments';
+import { listMedicalOrders, OrdenMedicaApi } from '../services/medicalOrders';
 type ReportType =
 'prescriptions' |
 'examOrders' |
@@ -33,200 +35,7 @@ interface ReportRecord {
   details: string[];
   status: 'activo' | 'vencido' | 'pendiente';
 }
-const MOCK_DOCTORS = [
-'Dr. Carlos Mendoza',
-'Dra. Ana García',
-'Dr. Luis Rodríguez',
-'Dra. María Torres',
-'Dr. José Martínez'];
-
-const MOCK_PATIENTS = [
-'Juan Pérez López',
-'María González Silva',
-'Carlos Rodríguez Mora',
-'Ana Martínez Vega',
-'Luis Torres Castillo',
-'Sofia Ramírez Díaz'];
-
-const MOCK_REPORTS: ReportRecord[] = [
-// Prescriptions
-{
-  id: 1,
-  type: 'prescriptions',
-  date: '2024-03-15',
-  patient: 'Juan Pérez López',
-  patientId: '1234567890',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  title: 'Receta Médica #RX-2024-001',
-  content: 'Tratamiento para hipertensión arterial',
-  details: [
-  'Losartán 50mg - 1 vez al día por 30 días',
-  'Aspirina 100mg - 1 vez al día por 30 días',
-  'Amlodipino 5mg - 1 vez al día por 30 días'],
-
-  status: 'activo'
-},
-{
-  id: 2,
-  type: 'prescriptions',
-  date: '2024-03-12',
-  patient: 'María González Silva',
-  patientId: '0987654321',
-  doctor: 'Dra. Ana García',
-  specialty: 'Cardiología',
-  title: 'Receta Médica #RX-2024-002',
-  content: 'Tratamiento para arritmia sinusal',
-  details: [
-  'Metoprolol 25mg - 2 veces al día por 60 días',
-  'Warfarina 5mg - 1 vez al día por 90 días'],
-
-  status: 'activo'
-},
-{
-  id: 3,
-  type: 'prescriptions',
-  date: '2024-02-20',
-  patient: 'Luis Torres Castillo',
-  patientId: '9988776655',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  title: 'Receta Médica #RX-2024-003',
-  content: 'Tratamiento para diabetes mellitus tipo 2',
-  details: [
-  'Metformina 850mg - 2 veces al día',
-  'Glibenclamida 5mg - 1 vez al día'],
-
-  status: 'vencido'
-},
-// Exam Orders
-{
-  id: 4,
-  type: 'examOrders',
-  date: '2024-03-15',
-  patient: 'Juan Pérez López',
-  patientId: '1234567890',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  title: 'Orden de Exámenes #OE-2024-001',
-  content: 'Exámenes de control para hipertensión',
-  details: [
-  'Hemograma completo',
-  'Perfil lipídico',
-  'Glucosa en ayunas',
-  'Creatinina sérica'],
-
-  status: 'pendiente'
-},
-{
-  id: 5,
-  type: 'examOrders',
-  date: '2024-03-12',
-  patient: 'María González Silva',
-  patientId: '0987654321',
-  doctor: 'Dra. Ana García',
-  specialty: 'Cardiología',
-  title: 'Orden de Exámenes #OE-2024-002',
-  content: 'Estudios cardíacos',
-  details: [
-  'Electrocardiograma',
-  'Holter 24 horas',
-  'Ecocardiograma transtorácico',
-  'BNP sérico'],
-
-  status: 'activo'
-},
-{
-  id: 6,
-  type: 'examOrders',
-  date: '2024-03-10',
-  patient: 'Carlos Rodríguez Mora',
-  patientId: '1122334455',
-  doctor: 'Dr. Luis Rodríguez',
-  specialty: 'Ortopedia',
-  title: 'Orden de Exámenes #OE-2024-003',
-  content: 'Imágenes para lumbalgia',
-  details: [
-  'RMN columna lumbar',
-  'Radiografía AP y lateral de columna',
-  'Densitometría ósea'],
-
-  status: 'pendiente'
-},
-// Certificates
-{
-  id: 7,
-  type: 'certificates',
-  date: '2024-03-14',
-  patient: 'Ana Martínez Vega',
-  patientId: '5566778899',
-  doctor: 'Dra. María Torres',
-  specialty: 'Ginecología',
-  title: 'Certificado Médico #CM-2024-001',
-  content: 'Certificado de control prenatal',
-  details: [
-  'Paciente en estado de gestación de 20 semanas',
-  'Embarazo de curso normal',
-  'Apta para actividades laborales de bajo riesgo',
-  'Válido por 30 días'],
-
-  status: 'activo'
-},
-{
-  id: 8,
-  type: 'certificates',
-  date: '2024-03-08',
-  patient: 'Juan Pérez López',
-  patientId: '1234567890',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  title: 'Certificado de Reposo #CR-2024-001',
-  content: 'Reposo médico por 3 días',
-  details: [
-  'Diagnóstico: Síndrome gripal',
-  'Reposo domiciliario por 3 días',
-  'Fecha: 08/03/2024 al 10/03/2024',
-  'No apto para actividades laborales'],
-
-  status: 'vencido'
-},
-// Medical History
-{
-  id: 9,
-  type: 'medicalHistory',
-  date: '2024-03-15',
-  patient: 'Juan Pérez López',
-  patientId: '1234567890',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  title: 'Historia Clínica #HC-2024-001',
-  content: 'Historia clínica completa',
-  details: [
-  'Antecedentes: Hipertensión arterial (2020)',
-  'Alergias: Penicilina',
-  'Medicación actual: Losartán 50mg',
-  'Última consulta: 15/03/2024'],
-
-  status: 'activo'
-},
-{
-  id: 10,
-  type: 'medicalHistory',
-  date: '2024-03-12',
-  patient: 'María González Silva',
-  patientId: '0987654321',
-  doctor: 'Dra. Ana García',
-  specialty: 'Cardiología',
-  title: 'Historia Clínica #HC-2024-002',
-  content: 'Historia clínica cardiológica',
-  details: [
-  'Antecedentes: Arritmia sinusal (2022)',
-  'Sin alergias conocidas',
-  'Medicación: Metoprolol 25mg',
-  'Última consulta: 12/03/2024'],
-
-  status: 'activo'
-}];
+// Deleted Mock constants
 
 const TAB_CONFIG = {
   prescriptions: {
@@ -475,7 +284,72 @@ function PrintPreviewModal({ record, onClose }: PrintModalProps) {
 
 }
 export function Reports() {
-  const [activeTab, setActiveTab] = useState<ReportType>('prescriptions');
+  const [appointments, setAppointments] = useState<CitaApi[]>([]);
+  const [orders, setOrders] = useState<OrdenMedicaApi[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [appts, ords] = await Promise.all([
+          listAppointments({ limit: 500 }),
+          listMedicalOrders({ limit: 500 })
+        ]);
+        setAppointments((appts as any).data ?? appts);
+        setOrders((ords as any).data ?? ords);
+      } catch(e) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchData();
+  }, []);
+
+  const reports: ReportRecord[] = useMemo(() => {
+    const base: ReportRecord[] = [];
+    
+    // Map appointments to medicalHistory items
+    appointments.forEach(a => {
+      base.push({
+         id: a.id * 1000,
+         type: 'medicalHistory',
+         date: a.fecha_hora?.split('T')[0] || '',
+         patient: `${a.paciente_nombres} ${a.paciente_apellidos}`,
+         patientId: 'CI N/A',
+         doctor: `Dr. ${a.medico_nombres}`,
+         specialty: 'Atención',
+         title: `Consulta #${a.id}`,
+         content: a.motivo || 'Consulta registrada',
+         details: ['Asistió a consulta', `Estado: ${a.estado}`],
+         status: 'activo'
+      });
+    });
+
+    // Map medical orders to examOrders items
+    orders.forEach(o => {
+      base.push({
+         id: o.id * 2000,
+         type: 'examOrders',
+         date: o.fecha_emision?.split('T')[0] || '',
+         patient: `Paciente ID: ${o.paciente_id}`,
+         patientId: 'CI N/A',
+         doctor: `Médico ID: ${o.medico_id}`,
+         specialty: 'Atención',
+         title: `Orden #${o.id} - ${o.tipo_orden}`,
+         content: o.observaciones || 'Orden generada',
+         details: (o.items || []).map(i => `${i.cantidad}x ${i.examen_texto}`),
+         status: o.estado === 'Anulada' ? 'vencido' : 'activo'
+      });
+    });
+
+    return base;
+  }, [appointments, orders]);
+
+  const MOCK_DOCTORS = [...new Set(reports.map(r => r.doctor))];
+  const MOCK_PATIENTS = [...new Set(reports.map(r => r.patient))];
+
+  const [activeTab, setActiveTab] = useState<ReportType>('medicalHistory');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDoctor, setFilterDoctor] = useState('');
   const [filterPatient, setFilterPatient] = useState('');
@@ -484,7 +358,7 @@ export function Reports() {
   const [filterStatus, setFilterStatus] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [printRecord, setPrintRecord] = useState<ReportRecord | null>(null);
-  const tabRecords = MOCK_REPORTS.filter((r) => r.type === activeTab);
+  const tabRecords = reports.filter((r) => r.type === activeTab);
   const filtered = tabRecords.filter((record) => {
     const matchSearch =
     !searchQuery ||
@@ -552,7 +426,7 @@ export function Reports() {
         {tabs.map((tab) => {
           const config = TAB_CONFIG[tab];
           const Icon = config.icon;
-          const count = MOCK_REPORTS.filter((r) => r.type === tab).length;
+          const count = reports.filter((r) => r.type === tab).length;
           return (
             <button
               key={tab}

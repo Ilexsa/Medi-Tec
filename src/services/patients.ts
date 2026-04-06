@@ -78,6 +78,30 @@ export async function getPatients(): Promise<PatientApi[]> {
   return res.data?.data ?? [];
 }
 
+export async function searchPatients(query: string): Promise<PatientApi[]> {
+  const res = await apiFetch<ApiEnvelope<PatientsListData>>(`/pacientes/buscar?q=${encodeURIComponent(query)}`);
+  if (!res?.success) throw new Error(res?.message || 'Error al buscar pacientes');
+  return res.data?.data ?? [];
+}
+
+export async function getPatient(id: number): Promise<PatientApi> {
+  const res = await apiFetch<ApiEnvelope<PatientApi>>(`/pacientes/${id}`);
+  if (!res?.success) throw new Error(res?.message || 'Error al obtener paciente');
+  return res.data;
+}
+
+export async function getPatientPrescriptions(id: number): Promise<any[]> {
+  const res = await apiFetch<ApiEnvelope<any[]>>(`/pacientes/${id}/recetas`);
+  if (!res?.success) throw new Error(res?.message || 'Error al obtener recetas del paciente');
+  return res.data ?? [];
+}
+
+export async function getPatientBillingSummary(id: number): Promise<any> {
+  const res = await apiFetch<ApiEnvelope<any>>(`/pacientes/${id}/facturacion/resumen`);
+  if (!res?.success) throw new Error(res?.message || 'Error al obtener resumen de facturación');
+  return res.data;
+}
+
 // Nota: endpoints típicos REST (si tu backend usa otra ruta, cámbialo aquí)
 export async function createPatient(payload: PatientCreateApi): Promise<PatientApi> {
   const res = await apiFetch<ApiEnvelope<PatientApi>>('/pacientes', {

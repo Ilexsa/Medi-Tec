@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   SearchIcon,
   FilterIcon,
@@ -11,6 +11,9 @@ import {
   EyeIcon,
   XIcon } from
 'lucide-react';
+import { listAppointments, CitaApi } from '../services/appointments';
+
+// Mapeado a la UI similar a HistoryRecord
 interface HistoryRecord {
   id: number;
   date: string;
@@ -31,151 +34,44 @@ interface HistoryRecord {
   prescriptions: string[];
   examOrders: string[];
 }
-const MOCK_DOCTORS = [
-'Dr. Carlos Mendoza',
-'Dra. Ana García',
-'Dr. Luis Rodríguez',
-'Dra. María Torres',
-'Dr. José Martínez'];
-
-const MOCK_PATIENTS = [
-'Juan Pérez López',
-'María González Silva',
-'Carlos Rodríguez Mora',
-'Ana Martínez Vega',
-'Luis Torres Castillo',
-'Sofia Ramírez Díaz',
-'Pedro Sánchez Ruiz'];
-
-const MOCK_HISTORY: HistoryRecord[] = [
-{
-  id: 1,
-  date: '2024-03-15',
-  patient: 'Juan Pérez López',
-  patientId: '1234567890',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  diagnosis: 'Hipertensión arterial leve',
-  treatment: 'Cambios en estilo de vida, dieta baja en sodio',
-  notes:
-  'Paciente refiere cefalea frecuente. Se recomienda control en 2 semanas.',
-  vitals: {
-    bp: '140/90',
-    hr: '78',
-    temp: '36.5',
-    weight: '82',
-    height: '175'
-  },
-  prescriptions: [
-  'Losartán 50mg - 1 vez al día',
-  'Aspirina 100mg - 1 vez al día'],
-
-  examOrders: ['Hemograma completo', 'Perfil lipídico']
-},
-{
-  id: 2,
-  date: '2024-03-12',
-  patient: 'María González Silva',
-  patientId: '0987654321',
-  doctor: 'Dra. Ana García',
-  specialty: 'Cardiología',
-  diagnosis: 'Arritmia sinusal',
-  treatment: 'Monitoreo cardíaco continuo',
-  notes: 'Se solicita Holter 24h. Próxima cita en 1 mes.',
-  vitals: {
-    bp: '120/80',
-    hr: '92',
-    temp: '36.8',
-    weight: '65',
-    height: '162'
-  },
-  prescriptions: ['Metoprolol 25mg - 2 veces al día'],
-  examOrders: ['Electrocardiograma', 'Holter 24h', 'Ecocardiograma']
-},
-{
-  id: 3,
-  date: '2024-03-10',
-  patient: 'Carlos Rodríguez Mora',
-  patientId: '1122334455',
-  doctor: 'Dr. Luis Rodríguez',
-  specialty: 'Ortopedia',
-  diagnosis: 'Lumbalgia crónica',
-  treatment: 'Fisioterapia, analgésicos',
-  notes:
-  'Paciente con dolor lumbar de 3 meses de evolución. RMN de columna solicitada.',
-  vitals: {
-    bp: '118/76',
-    hr: '72',
-    temp: '36.6',
-    weight: '90',
-    height: '180'
-  },
-  prescriptions: ['Ibuprofeno 400mg - 3 veces al día', 'Relajante muscular'],
-  examOrders: ['RMN columna lumbar', 'Radiografía columna']
-},
-{
-  id: 4,
-  date: '2024-03-08',
-  patient: 'Ana Martínez Vega',
-  patientId: '5566778899',
-  doctor: 'Dra. María Torres',
-  specialty: 'Ginecología',
-  diagnosis: 'Control prenatal - 20 semanas',
-  treatment: 'Suplementos vitamínicos, control mensual',
-  notes:
-  'Embarazo de curso normal. Ecografía morfológica realizada con resultados normales.',
-  vitals: {
-    bp: '110/70',
-    hr: '80',
-    temp: '36.4',
-    weight: '68',
-    height: '158'
-  },
-  prescriptions: ['Ácido fólico 5mg', 'Hierro 300mg', 'Calcio 500mg'],
-  examOrders: ['Glucosa en ayunas', 'Hemograma', 'Urocultivo']
-},
-{
-  id: 5,
-  date: '2024-03-05',
-  patient: 'Luis Torres Castillo',
-  patientId: '9988776655',
-  doctor: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  diagnosis: 'Diabetes mellitus tipo 2',
-  treatment: 'Metformina, dieta diabética',
-  notes: 'HbA1c elevada. Se ajusta dosis de metformina. Control en 3 meses.',
-  vitals: {
-    bp: '130/85',
-    hr: '76',
-    temp: '36.7',
-    weight: '95',
-    height: '172'
-  },
-  prescriptions: ['Metformina 850mg - 2 veces al día', 'Glibenclamida 5mg'],
-  examOrders: ['HbA1c', 'Perfil renal', 'Microalbuminuria']
-},
-{
-  id: 6,
-  date: '2024-03-01',
-  patient: 'Sofia Ramírez Díaz',
-  patientId: '4433221100',
-  doctor: 'Dra. Ana García',
-  specialty: 'Cardiología',
-  diagnosis: 'Insuficiencia cardíaca compensada',
-  treatment: 'Diuréticos, restricción hídrica',
-  notes: 'Paciente estable. Fracción de eyección 45%. Control mensual.',
-  vitals: {
-    bp: '125/82',
-    hr: '88',
-    temp: '36.5',
-    weight: '72',
-    height: '160'
-  },
-  prescriptions: ['Furosemida 40mg', 'Enalapril 10mg', 'Carvedilol 6.25mg'],
-  examOrders: ['Ecocardiograma', 'BNP', 'Electrolitos']
-}];
-
 export function History() {
+  const [appointments, setAppointments] = useState<CitaApi[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        const res = await listAppointments({ limit: 500 });
+        setAppointments((res as any).data ?? res);
+      } catch(e) {
+        // error
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchHistory();
+  }, []);
+
+  const historyRecords: HistoryRecord[] = useMemo(() => {
+    return appointments.map(a => ({
+      id: a.id,
+      date: a.fecha_hora?.split('T')[0] || '',
+      patient: `${a.paciente_nombres} ${a.paciente_apellidos}`,
+      patientId: 'CI No disp.',
+      doctor: `Dr. ${a.medico_nombres} ${a.medico_apellidos}`,
+      specialty: 'Atención Médica', // or map if available
+      diagnosis: a.motivo || 'Motivo no registrado',
+      treatment: 'Sin tratamiento registrado',
+      notes: a.estado || 'Detalles en sistema...',
+      vitals: { bp: '--/--', hr: '--', temp: '--', weight: '--', height: '--' },
+      prescriptions: [],
+      examOrders: []
+    }));
+  }, [appointments]);
+
+  const MOCK_DOCTORS = [...new Set(historyRecords.map(r => r.doctor))];
+  const MOCK_PATIENTS = [...new Set(historyRecords.map(r => r.patient))];
   const [searchPatient, setSearchPatient] = useState('');
   const [filterDoctor, setFilterDoctor] = useState('');
   const [filterPatient, setFilterPatient] = useState('');
@@ -187,7 +83,7 @@ export function History() {
     null
   );
   const [showFilters, setShowFilters] = useState(false);
-  const filtered = MOCK_HISTORY.filter((record) => {
+  const filtered = historyRecords.filter((record) => {
     const matchSearch =
     !searchPatient ||
     record.patient.toLowerCase().includes(searchPatient.toLowerCase()) ||
@@ -223,7 +119,7 @@ export function History() {
   filterDateTo,
   filterSpecialty].
   filter(Boolean).length;
-  const specialties = [...new Set(MOCK_HISTORY.map((r) => r.specialty))];
+  const specialties = [...new Set(historyRecords.map((r) => r.specialty))];
   return (
     <div className="p-6 space-y-6">
       {/* Header */}

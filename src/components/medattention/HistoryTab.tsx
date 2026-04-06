@@ -48,8 +48,9 @@ const MOCK_HISTORY: HistoryEntry[] = [
 
 interface HistoryTabProps {
   patientName: string;
+  patientId: number;
 }
-export function HistoryTab({ patientName }: HistoryTabProps) {
+export function HistoryTab({ patientName, patientId }: HistoryTabProps) {
   const [expanded, setExpanded] = useState<number[]>([]);
   const toggle = (id: number) =>
   setExpanded((prev) =>

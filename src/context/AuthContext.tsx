@@ -61,12 +61,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await res.json();
-      // Tu backend puede devolver el user en distintos niveles.
       const nextUser = data?.user ?? data?.data?.user ?? data?.data ?? data;
+      const isSubActive = data?.suscripcion_activa ?? data?.data?.suscripcion_activa ?? true; // Default true si no viene o es SuperAdmin (se maneja abajo)
+
+      // VALIDATE SUBSCRIPTION
+      if (nextUser?.rol && nextUser?.rol !== 'SuperAdmin' && nextUser?.inquilino_id) {
+        if (!isSubActive) {
+          alert('No posee una suscripción activa. Comuníquese con administración.');
+          logout();
+          return;
+        }
+      }
+
       setUser(nextUser);
       setAccessToken(token);
     } catch (e) {
-      // Si hay error de red o el backend no responde, limpiamos la sesión
       console.error('Error al validar sesión:', e);
       logout();
     } finally {
@@ -80,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     storage.setItem('access_token', token);
     storage.setItem('user_data', JSON.stringify(userData));
 
-    // Limpia el otro storage para evitar “tokens fantasma”
     const other = rememberMe ? sessionStorage : localStorage;
     other.removeItem('access_token');
     other.removeItem('user_data');

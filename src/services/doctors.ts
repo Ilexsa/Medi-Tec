@@ -134,3 +134,50 @@ export async function deleteDoctor(id: number): Promise<void> {
   const res = await apiFetch<MessageResponse>(`/medicos/${id}`, { method: 'DELETE' });
   if (!res?.success) throw new Error(res?.error || res?.message || 'Error al eliminar médico');
 }
+
+export async function getDoctor(id: number): Promise<DoctorApi> {
+  const res = await apiFetch<CreateResponse>(`/medicos/${id}`);
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al obtener médico');
+  return res.data;
+}
+
+// Bloqueos
+export async function listDoctorBlockings(medicoId: number): Promise<any[]> {
+  const res = await apiFetch<any>(`/medicos/${medicoId}/bloqueos`);
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al listar bloqueos');
+  return res.data ?? [];
+}
+
+export async function createDoctorBlocking(medicoId: number, payload: any): Promise<any> {
+  const res = await apiFetch<any>(`/medicos/${medicoId}/bloqueos`, { method: 'POST', body: JSON.stringify(payload) });
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al crear bloqueo');
+  return res.data;
+}
+
+export async function deleteDoctorBlocking(medicoId: number, bloqueoId: number): Promise<void> {
+  const res = await apiFetch<any>(`/medicos/${medicoId}/bloqueos/${bloqueoId}`, { method: 'DELETE' });
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al eliminar bloqueo');
+}
+
+// Tarifas
+export async function listDoctorRates(medicoId: number): Promise<any[]> {
+  const res = await apiFetch<any>(`/medicos/${medicoId}/tarifas`);
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al listar tarifas');
+  return res.data ?? [];
+}
+
+export async function createDoctorRate(medicoId: number, payload: any): Promise<any> {
+  const res = await apiFetch<any>(`/medicos/${medicoId}/tarifas`, { method: 'POST', body: JSON.stringify(payload) });
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al crear tarifa');
+  return res.data;
+}
+
+export async function updateRate(tarifaId: number, payload: any): Promise<void> {
+  const res = await apiFetch<any>(`/tarifas/${tarifaId}`, { method: 'PUT', body: JSON.stringify(payload) });
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al actualizar tarifa');
+}
+
+export async function deleteRate(tarifaId: number): Promise<void> {
+  const res = await apiFetch<any>(`/tarifas/${tarifaId}`, { method: 'DELETE' });
+  if (!res?.success) throw new Error(res?.error || res?.message || 'Error al eliminar tarifa');
+}

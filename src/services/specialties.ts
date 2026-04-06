@@ -56,6 +56,12 @@ export async function createSpecialty(payload: SpecialtyCreateApi): Promise<Spec
 }
 
 // Asumido REST típico:
+export async function getSpecialty(id: number): Promise<SpecialtyApi> {
+  const res = await apiFetch<CreateResponse>(`/especialidades/${id}`);
+  if (!res?.success) throw new Error(res?.message || 'Error al obtener especialidad');
+  return res.data;
+}
+
 export async function updateSpecialty(id: number, payload: Partial<SpecialtyCreateApi>): Promise<void> {
   const res = await apiFetch<MessageResponse>(`/especialidades/${id}`, {
     method: 'PUT',

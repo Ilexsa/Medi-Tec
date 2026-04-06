@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   StethoscopeIcon,
@@ -7,116 +7,18 @@ import {
   PlayCircleIcon,
   ClockIcon } from
 'lucide-react';
-interface Consultation {
-  id: number;
-  patientName: string;
-  doctorId: number;
-  time: string;
-  reason: string;
-  status: 'Pendiente' | 'En Atención' | 'Completada';
-}
+
+import { CitaApi, listAppointments } from '../services/appointments';
+import { DoctorApi, getDoctors } from '../services/doctors';
+
 interface DoctorGroup {
   id: number;
   name: string;
   specialty: string;
-  consultations: Consultation[];
+  consultations: CitaApi[];
 }
-const MOCK_DATA: DoctorGroup[] = [
-{
-  id: 1,
-  name: 'Dr. Carlos Mendoza',
-  specialty: 'Medicina General',
-  consultations: [
-  {
-    id: 101,
-    patientName: 'Juan Pérez',
-    doctorId: 1,
-    time: '08:00',
-    reason: 'Control rutinario',
-    status: 'Completada'
-  },
-  {
-    id: 102,
-    patientName: 'María García',
-    doctorId: 1,
-    time: '08:30',
-    reason: 'Dolor de cabeza',
-    status: 'En Atención'
-  },
-  {
-    id: 103,
-    patientName: 'Luis Rodríguez',
-    doctorId: 1,
-    time: '09:00',
-    reason: 'Fiebre persistente',
-    status: 'Pendiente'
-  },
-  {
-    id: 104,
-    patientName: 'Carmen Díaz',
-    doctorId: 1,
-    time: '09:30',
-    reason: 'Chequeo anual',
-    status: 'Pendiente'
-  }]
 
-},
-{
-  id: 2,
-  name: 'Dra. Ana Torres',
-  specialty: 'Pediatría',
-  consultations: [
-  {
-    id: 201,
-    patientName: 'Pedro Martínez (menor)',
-    doctorId: 2,
-    time: '08:00',
-    reason: 'Vacunación',
-    status: 'Completada'
-  },
-  {
-    id: 202,
-    patientName: 'Sofía López (menor)',
-    doctorId: 2,
-    time: '08:30',
-    reason: 'Tos y resfriado',
-    status: 'Pendiente'
-  },
-  {
-    id: 203,
-    patientName: 'Diego Sánchez (menor)',
-    doctorId: 2,
-    time: '09:00',
-    reason: 'Control de peso',
-    status: 'Pendiente'
-  }]
-
-},
-{
-  id: 3,
-  name: 'Dr. Roberto Vega',
-  specialty: 'Odontología',
-  consultations: [
-  {
-    id: 301,
-    patientName: 'Elena Vargas',
-    doctorId: 3,
-    time: '10:00',
-    reason: 'Limpieza dental',
-    status: 'Pendiente'
-  },
-  {
-    id: 302,
-    patientName: 'Miguel Torres',
-    doctorId: 3,
-    time: '10:30',
-    reason: 'Dolor molar',
-    status: 'Pendiente'
-  }]
-
-}];
-
-const statusConfig = {
+const statusConfig: Record<string, string> = {
   Pendiente: 'bg-amber-100 text-amber-700',
   'En Atención': 'bg-blue-100 text-blue-700',
   Completada: 'bg-green-100 text-green-700'
@@ -126,27 +28,83 @@ export function MedicalConsult() {
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const [search, setSearch] = useState('');
-  const filtered = MOCK_DATA.map((group) => ({
-    ...group,
-    consultations: group.consultations.filter(
-      (c) =>
-      c.patientName.toLowerCase().includes(search.toLowerCase()) ||
-      c.reason.toLowerCase().includes(search.toLowerCase()) ||
-      c.status.toLowerCase().includes(search.toLowerCase())
-    )
-  })).filter((g) => g.consultations.length > 0);
-  const totalConsults = MOCK_DATA.reduce(
-    (acc, g) => acc + g.consultations.length,
+  const [appointments, setAppointments] = useState<CitaApi[]>([]);
+  const [doctors, setDoctors] = useState<DoctorApi[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [appts, docs] = await Promise.all([
+        listAppointments({ limit: 500 }),
+        getDoctors({ limit: 100 })
+      ]);
+      setAppointments((appts as any).data ?? appts ?? []);
+      setDoctors((docs as any).data ?? docs ?? []);
+    } catch(e: any) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchData();
+  }, []);
+
+  const groups = useMemo(() => {
+    const map = new Map<number, DoctorGroup>();
+    doctors.forEach(d => {
+      map.set(d.id, {
+        id: d.id,
+        name: `Dr. ${d.nombres} ${d.apellidos}`,
+        specialty: d.nombre_especialidad || 'General',
+        consultations: []
+      });
+    });
+
+    appointments.forEach(a => {
+      if (!a.fecha_hora?.startsWith(selectedDate)) return;
+      if (typeof a.medico_id === 'number' && map.has(a.medico_id)) {
+        map.get(a.medico_id)!.consultations.push(a);
+      } else {
+        // Just in case medico lacks record
+        if (!map.has(a.medico_id)) {
+           map.set(a.medico_id, {
+              id: a.medico_id,
+              name: `Dr. ${a.medico_nombres} ${a.medico_apellidos}`,
+              specialty: 'General',
+              consultations: []
+           });
+        }
+        map.get(a.medico_id)!.consultations.push(a);
+      }
+    });
+    return Array.from(map.values()).filter(g => g.consultations.length > 0);
+  }, [appointments, doctors, selectedDate]);
+
+  const filtered = useMemo(() => {
+    return groups.map((group) => ({
+      ...group,
+      consultations: group.consultations.filter(
+        (c) => {
+          const pat = `${c.paciente_nombres} ${c.paciente_apellidos}`.toLowerCase();
+          const reason = (c.motivo || '').toLowerCase();
+          const pstate = (c.estado || '').toLowerCase();
+          const srch = search.toLowerCase();
+          return pat.includes(srch) || reason.includes(srch) || pstate.includes(srch);
+        }
+      )
+    })).filter((g) => g.consultations.length > 0);
+  }, [groups, search]);
+
+  const totalConsults = groups.reduce((acc, g) => acc + g.consultations.length, 0);
+  const pending = groups.reduce(
+    (acc, g) => acc + g.consultations.filter((c) => c.estado === 'Pendiente' || c.estado === 'Programada').length,
     0
   );
-  const pending = MOCK_DATA.reduce(
-    (acc, g) =>
-    acc + g.consultations.filter((c) => c.status === 'Pendiente').length,
-    0
-  );
-  const inProgress = MOCK_DATA.reduce(
-    (acc, g) =>
-    acc + g.consultations.filter((c) => c.status === 'En Atención').length,
+  const inProgress = groups.reduce(
+    (acc, g) => acc + g.consultations.filter((c) => c.estado === 'En Atención' || c.estado === 'En Curso').length,
     0
   );
   return (
@@ -226,49 +184,48 @@ export function MedicalConsult() {
               </span>
             </div>
             <div className="divide-y divide-slate-50">
-              {group.consultations.map((consult) =>
+              {group.consultations.map((consult) => {
+                const timeStr = consult.fecha_hora?.split('T')[1]?.substring(0, 5) || '00:00';
+                return (
             <div
               key={consult.id}
               className="flex items-center gap-4 px-5 py-3.5">
-
                   <div className="flex items-center gap-1.5 text-slate-500 w-14">
                     <ClockIcon size={13} />
-                    <span className="text-xs font-medium">{consult.time}</span>
+                    <span className="text-xs font-medium">{timeStr}</span>
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-800">
-                      {consult.patientName}
+                      {consult.paciente_nombres} {consult.paciente_apellidos}
                     </p>
-                    <p className="text-xs text-slate-500">{consult.reason}</p>
+                    <p className="text-xs text-slate-500">{consult.motivo || 'Sin motivo'}</p>
                   </div>
                   <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[consult.status]}`}>
-
-                    {consult.status}
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[consult.estado] || statusConfig.Pendiente}`}>
+                    {consult.estado}
                   </span>
-                  {consult.status !== 'Completada' &&
+                  {consult.estado !== 'Completada' &&
               <button
                 onClick={() =>
                 navigate(`/medical-attention/${consult.id}`)
                 }
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-medium transition-colors">
-
                       <PlayCircleIcon size={13} />
                       Iniciar Atención
                     </button>
               }
-                  {consult.status === 'Completada' &&
+                  {consult.estado === 'Completada' &&
               <button
                 onClick={() =>
                 navigate(`/medical-attention/${consult.id}`)
                 }
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-medium transition-colors hover:bg-slate-50">
-
                       Ver Detalle
                     </button>
               }
                 </div>
-            )}
+                );
+            })}
             </div>
           </div>
         )}

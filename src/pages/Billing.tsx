@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   CreditCardIcon,
@@ -8,122 +8,70 @@ import {
   XCircleIcon,
   SearchIcon } from
 'lucide-react';
+
+import { FacturaApi, listInvoices, createInvoice, cancelInvoice } from '../services/billing';
+import { getPatients, PatientApi } from '../services/patients';
+import { getDoctors, DoctorApi } from '../services/doctors';
+import { listBillableItems, CatalogoItem } from '../services/catalogs';
+
 interface LineItem {
   id: number;
   nombre: string;
   cantidad: number;
   precio: number;
+  tipo: string;
 }
-interface Invoice {
-  id: number;
-  numero: string;
-  fecha: string;
-  paciente: string;
-  medico: string;
-  total: number;
-  estado: 'Pendiente' | 'Pagada' | 'Anulada';
-}
-const CATALOG = [
-{
-  id: 1,
-  nombre: 'Consulta Medicina General',
-  precio: 25.0
-},
-{
-  id: 2,
-  nombre: 'Consulta Especialista',
-  precio: 45.0
-},
-{
-  id: 3,
-  nombre: 'Biometría Hemática',
-  precio: 12.0
-},
-{
-  id: 4,
-  nombre: 'Radiografía de Tórax',
-  precio: 30.0
-},
-{
-  id: 5,
-  nombre: 'Curación Simple',
-  precio: 15.0
-},
-{
-  id: 6,
-  nombre: 'Amoxicilina 500mg',
-  precio: 8.5
-}];
-
-const PATIENTS = ['Juan Pérez', 'María García', 'Luis Rodríguez', 'Carmen Díaz'];
-const DOCTORS = ['Dr. Carlos Mendoza', 'Dra. Ana Torres', 'Dr. Roberto Vega'];
-const initialInvoices: Invoice[] = [
-{
-  id: 1,
-  numero: 'FAC-0001',
-  fecha: '2025-03-01',
-  paciente: 'Juan Pérez',
-  medico: 'Dr. Carlos Mendoza',
-  total: 37.0,
-  estado: 'Pagada'
-},
-{
-  id: 2,
-  numero: 'FAC-0002',
-  fecha: '2025-03-01',
-  paciente: 'María García',
-  medico: 'Dra. Ana Torres',
-  total: 57.0,
-  estado: 'Pendiente'
-},
-{
-  id: 3,
-  numero: 'FAC-0003',
-  fecha: '2025-02-28',
-  paciente: 'Luis Rodríguez',
-  medico: 'Dr. Carlos Mendoza',
-  total: 25.0,
-  estado: 'Pagada'
-}];
 
 const estadoColors: Record<string, string> = {
+  Emitida: 'bg-blue-100 text-blue-700',
   Pendiente: 'bg-amber-100 text-amber-700',
   Pagada: 'bg-green-100 text-green-700',
   Anulada: 'bg-red-100 text-red-600'
 };
+
 export function Billing() {
   const location = useLocation();
-  const preloaded = location.state as {
-    patient?: {
-      nombre: string;
-      apellido: string;
-    };
-    doctor?: {
-      nombre: string;
-      apellido: string;
-    };
-  } | null;
-  const [patient, setPatient] = useState(
-    preloaded?.patient ?
-    `${preloaded.patient.nombre} ${preloaded.patient.apellido}` :
-    ''
-  );
-  const [doctor, setDoctor] = useState(
-    preloaded?.doctor ?
-    `Dr. ${preloaded.doctor.nombre} ${preloaded.doctor.apellido}` :
-    ''
-  );
+  const preloaded = location.state as any;
+  const [patientId, setPatientId] = useState<string>('');
+  const [doctorId, setDoctorId] = useState<string>('');
+  
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [selectedCatalog, setSelectedCatalog] = useState('');
   const [notes, setNotes] = useState('');
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  
+  const [invoices, setInvoices] = useState<FacturaApi[]>([]);
+  const [patients, setPatients] = useState<PatientApi[]>([]);
+  const [doctors, setDoctors] = useState<DoctorApi[]>([]);
+  const [catalogs, setCatalogs] = useState<CatalogoItem[]>([]);
+  
   const [search, setSearch] = useState('');
   const [taxRate] = useState(0.12);
+  
+  const fetchAll = async () => {
+    try {
+      const [inv, pts, dcs, cts] = await Promise.all([
+        listInvoices(),
+        getPatients(),
+        getDoctors({ page: 1, limit: 100 }),
+        listBillableItems()
+      ]);
+      setInvoices((inv as any).data ?? inv ?? []);
+      setPatients(pts);
+      setDoctors((dcs as any).data ?? dcs ?? []);
+      setCatalogs((cts as any).data ?? cts ?? []);
+    } catch(e: any) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    void fetchAll();
+  }, []);
   const subtotal = lineItems.reduce((acc, i) => acc + i.cantidad * i.precio, 0);
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
   const addItem = () => {
-    const cat = CATALOG.find((c) => c.id === Number(selectedCatalog));
+    const cat = catalogs.find((c) => c.id === Number(selectedCatalog));
     if (!cat) return;
     const existing = lineItems.find((i) => i.id === cat.id);
     if (existing) {
@@ -144,7 +92,8 @@ export function Billing() {
         id: cat.id,
         nombre: cat.nombre,
         cantidad: 1,
-        precio: cat.precio
+        precio: cat.precio_referencial || 0,
+        tipo: cat.tipo || 'Servicio'
       }]
       );
     }
@@ -165,29 +114,53 @@ export function Billing() {
     )
     );
   };
-  const emitInvoice = () => {
-    if (!patient || lineItems.length === 0) return;
-    const newInv: Invoice = {
-      id: Date.now(),
-      numero: `FAC-${String(invoices.length + 1).padStart(4, '0')}`,
-      fecha: new Date().toISOString().split('T')[0],
-      paciente: patient,
-      medico: doctor || 'Sin asignar',
+  const emitInvoice = async () => {
+    if (!patientId || lineItems.length === 0) return;
+    
+    const payload: Partial<FacturaApi> = {
+      paciente_id: Number(patientId),
+      fecha_emision: new Date().toISOString(),
+      subtotal,
+      impuestos: tax,
+      descuentos: 0,
       total,
-      estado: 'Pendiente'
+      saldo_pendiente: total,
+      estado: 'Emitida',
+      observaciones: notes,
+      detalles: lineItems.map(item => ({
+        id: 0,
+        factura_id: 0,
+        item_tipo: item.tipo,
+        item_id: item.id,
+        descripcion: item.nombre,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio,
+        subtotal: item.cantidad * item.precio,
+        impuesto_porcentaje: taxRate * 100,
+        impuesto_monto: (item.cantidad * item.precio) * taxRate,
+        descuento_porcentaje: 0,
+        descuento_monto: 0,
+        total: (item.cantidad * item.precio) * (1 + taxRate)
+      }))
     };
-    setInvoices((prev) => [newInv, ...prev]);
-    setLineItems([]);
-    setPatient('');
-    setDoctor('');
-    setNotes('');
+
+    try {
+      await createInvoice(payload);
+      await fetchAll();
+      setLineItems([]);
+      setPatientId('');
+      setDoctorId('');
+      setNotes('');
+    } catch(e: any) {
+      alert(e?.message || 'Error al emitir');
+    }
   };
-  const filteredInvoices = invoices.filter(
-    (i) =>
-    i.paciente.toLowerCase().includes(search.toLowerCase()) ||
-    i.numero.toLowerCase().includes(search.toLowerCase()) ||
-    i.medico.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter((i) => {
+    const patientStr = i.nombre_cliente || '';
+    const numberStr = i.numero_factura || '';
+    return patientStr.toLowerCase().includes(search.toLowerCase()) ||
+           numberStr.toLowerCase().includes(search.toLowerCase());
+  });
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
@@ -211,14 +184,14 @@ export function Billing() {
               Paciente *
             </label>
             <select
-              value={patient}
-              onChange={(e) => setPatient(e.target.value)}
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 
               <option value="">Seleccionar paciente...</option>
-              {PATIENTS.map((p) =>
-              <option key={p} value={p}>
-                  {p}
+              {patients.map((p) =>
+              <option key={p.id} value={p.id}>
+                  {p.nombres} {p.apellidos}
                 </option>
               )}
             </select>
@@ -228,14 +201,14 @@ export function Billing() {
               Médico
             </label>
             <select
-              value={doctor}
-              onChange={(e) => setDoctor(e.target.value)}
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 
               <option value="">Seleccionar médico...</option>
-              {DOCTORS.map((d) =>
-              <option key={d} value={d}>
-                  {d}
+              {doctors.map((d) =>
+              <option key={d.id} value={d.id}>
+                  Dr. {d.nombres} {d.apellidos}
                 </option>
               )}
             </select>
@@ -250,9 +223,9 @@ export function Billing() {
             className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 
             <option value="">Seleccionar servicio del catálogo...</option>
-            {CATALOG.map((c) =>
+            {catalogs.map((c) =>
             <option key={c.id} value={c.id}>
-                {c.nombre} — ${c.precio.toFixed(2)}
+                {c.nombre} — ${c.precio_referencial?.toFixed(2) || '0.00'}
               </option>
             )}
           </select>
@@ -353,7 +326,7 @@ export function Billing() {
         <div className="flex justify-end">
           <button
             onClick={emitInvoice}
-            disabled={!patient || lineItems.length === 0}
+            disabled={!patientId || lineItems.length === 0}
             className="flex items-center gap-2 px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40">
 
             <PrinterIcon size={15} /> Emitir Factura
@@ -413,26 +386,24 @@ export function Billing() {
               <tr
                 key={inv.id}
                 className="hover:bg-slate-50/50 transition-colors">
-
                   <td className="px-4 py-3 text-xs font-mono text-blue-600 font-medium">
-                    {inv.numero}
+                    {inv.numero_factura}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
-                    {inv.fecha}
+                    {inv.fecha_emision?.split('T')[0]}
                   </td>
                   <td className="px-4 py-3 text-sm font-medium text-slate-800">
-                    {inv.paciente}
+                    {inv.nombre_cliente || `Cliente #${inv.paciente_id}`}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">
-                    {inv.medico}
+                    —
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-bold text-slate-800">
-                    ${inv.total.toFixed(2)}
+                    ${inv.total?.toFixed(2)}
                   </td>
                   <td className="px-4 py-3">
                     <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoColors[inv.estado]}`}>
-
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoColors[inv.estado] || estadoColors.Emitida}`}>
                       {inv.estado}
                     </span>
                   </td>
@@ -441,25 +412,21 @@ export function Billing() {
                       <button
                       className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Imprimir">
-
                         <PrinterIcon size={14} />
                       </button>
                       <button
-                      onClick={() =>
-                      setInvoices((prev) =>
-                      prev.map((i) =>
-                      i.id === inv.id ?
-                      {
-                        ...i,
-                        estado: 'Anulada'
-                      } :
-                      i
-                      )
-                      )
-                      }
+                      onClick={async () => {
+                         if(confirm(`¿Anular la factura ${inv.numero_factura}?`)) {
+                             try {
+                                 await cancelInvoice(inv.id);
+                                 void fetchAll();
+                             } catch(e: any) {
+                                 alert(e?.message);
+                             }
+                         }
+                      }}
                       className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Anular">
-
                         <XCircleIcon size={14} />
                       </button>
                     </div>

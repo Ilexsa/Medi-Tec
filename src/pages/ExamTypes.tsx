@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   PlusIcon,
   SearchIcon,
@@ -7,71 +7,7 @@ import {
   FlaskConicalIcon,
   XIcon } from
 'lucide-react';
-interface ExamType {
-  id: number;
-  codigo: string;
-  nombre: string;
-  categoria: 'Laboratorio' | 'Imagen' | 'Cardiología' | 'Otro';
-  descripcion: string;
-  estado: 'Activo' | 'Inactivo';
-}
-const initialExams: ExamType[] = [
-{
-  id: 1,
-  codigo: 'LAB-001',
-  nombre: 'Biometría Hemática Completa',
-  categoria: 'Laboratorio',
-  descripcion: 'Conteo completo de células sanguíneas',
-  estado: 'Activo'
-},
-{
-  id: 2,
-  codigo: 'LAB-002',
-  nombre: 'Glucosa en Ayunas',
-  categoria: 'Laboratorio',
-  descripcion: 'Nivel de glucosa en sangre',
-  estado: 'Activo'
-},
-{
-  id: 3,
-  codigo: 'LAB-003',
-  nombre: 'Perfil Lipídico',
-  categoria: 'Laboratorio',
-  descripcion: 'Colesterol total, HDL, LDL, triglicéridos',
-  estado: 'Activo'
-},
-{
-  id: 4,
-  codigo: 'IMG-001',
-  nombre: 'Radiografía de Tórax',
-  categoria: 'Imagen',
-  descripcion: 'Imagen radiológica del tórax AP y lateral',
-  estado: 'Activo'
-},
-{
-  id: 5,
-  codigo: 'IMG-002',
-  nombre: 'Ecografía Abdominal',
-  categoria: 'Imagen',
-  descripcion: 'Ultrasonido de órganos abdominales',
-  estado: 'Activo'
-},
-{
-  id: 6,
-  codigo: 'CAR-001',
-  nombre: 'Electrocardiograma',
-  categoria: 'Cardiología',
-  descripcion: 'Registro eléctrico del corazón',
-  estado: 'Activo'
-},
-{
-  id: 7,
-  codigo: 'CAR-002',
-  nombre: 'Ecocardiograma',
-  categoria: 'Cardiología',
-  descripcion: 'Ultrasonido cardíaco',
-  estado: 'Activo'
-}];
+import { CatalogoItem, listExams, createExam, updateExam, deleteExam } from '../services/catalogs';
 
 const catColors: Record<string, string> = {
   Laboratorio: 'bg-purple-100 text-purple-700',
@@ -79,38 +15,55 @@ const catColors: Record<string, string> = {
   Cardiología: 'bg-red-100 text-red-700',
   Otro: 'bg-slate-100 text-slate-600'
 };
-const empty: Omit<ExamType, 'id'> = {
+
+const empty: Partial<CatalogoItem> = {
   codigo: '',
   nombre: '',
-  categoria: 'Laboratorio',
+  tipo: 'Laboratorio',
   descripcion: '',
-  estado: 'Activo'
+  activo: true
 };
+
 export function ExamTypes() {
-  const [exams, setExams] = useState<ExamType[]>(initialExams);
+  const [exams, setExams] = useState<CatalogoItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState('');
+  
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<ExamType | null>(null);
-  const [form, setForm] = useState<Omit<ExamType, 'id'>>(empty);
-  const [errors, setErrors] = useState<Partial<Record<keyof ExamType, string>>>(
-    {}
-  );
-  const filtered = exams.filter(
-    (e) =>
-    e.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    e.codigo.toLowerCase().includes(search.toLowerCase()) ||
-    e.categoria.toLowerCase().includes(search.toLowerCase())
-  );
-  const openModal = (exam?: ExamType) => {
+  const [editing, setEditing] = useState<CatalogoItem | null>(null);
+  const [form, setForm] = useState<Partial<CatalogoItem>>(empty);
+  const [errors, setErrors] = useState<Partial<Record<keyof CatalogoItem, string>>>({});
+
+  const fetchExams = async () => {
+    setLoading(true);
+    setErrorText('');
+    try {
+      const res = await listExams();
+      setExams((res as any).data ?? res ?? []);
+    } catch(e: any) {
+      setErrorText(e?.message || 'Error al obtener exámenes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchExams();
+  }, []);
+  const filtered = useMemo(() => {
+    return exams.filter(
+      (e) =>
+      e.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      (e.codigo || '').toLowerCase().includes(search.toLowerCase()) ||
+      (e.tipo || '').toLowerCase().includes(search.toLowerCase())
+    );
+  }, [exams, search]);
+
+  const openModal = (exam?: CatalogoItem) => {
     if (exam) {
       setEditing(exam);
-      setForm({
-        codigo: exam.codigo,
-        nombre: exam.nombre,
-        categoria: exam.categoria,
-        descripcion: exam.descripcion,
-        estado: exam.estado
-      });
+      setForm({ ...exam });
     } else {
       setEditing(null);
       setForm(empty);
@@ -119,39 +72,35 @@ export function ExamTypes() {
     setModalOpen(true);
   };
   const validate = () => {
-    const e: Partial<Record<keyof ExamType, string>> = {};
-    if (!form.codigo.trim()) e.codigo = 'Requerido';
-    if (!form.nombre.trim()) e.nombre = 'Requerido';
+    const e: Partial<Record<keyof CatalogoItem, string>> = {};
+    if (!form.codigo?.trim()) e.codigo = 'Requerido';
+    if (!form.nombre?.trim()) e.nombre = 'Requerido';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    if (editing) {
-      setExams((prev) =>
-      prev.map((e) =>
-      e.id === editing.id ?
-      {
-        ...form,
-        id: editing.id
-      } :
-      e
-      )
-      );
-    } else {
-      setExams((prev) => [
-      ...prev,
-      {
-        ...form,
-        id: Date.now()
-      }]
-      );
+    try {
+      if (editing) {
+          await updateExam(editing.id, form);
+      } else {
+          await createExam(form);
+      }
+      await fetchExams();
+      setModalOpen(false);
+    } catch(e: any) {
+        alert(e?.message || 'Error al guardar');
     }
-    setModalOpen(false);
   };
-  const handleDelete = (id: number) => {
-    if (confirm('¿Eliminar este tipo de examen?'))
-    setExams((prev) => prev.filter((e) => e.id !== id));
+  const handleDelete = async (id: number) => {
+    if (confirm('¿Eliminar este tipo de examen?')) {
+        try {
+            await deleteExam(id);
+            await fetchExams();
+        } catch(e: any) {
+            alert(e?.message || 'Error al eliminar');
+        }
+    }
   };
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -168,10 +117,15 @@ export function ExamTypes() {
         <button
           onClick={() => openModal()}
           className="flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors">
-
           <PlusIcon size={16} /> Nuevo Examen
         </button>
       </div>
+
+      {errorText && (
+        <div className="mb-4 flex items-center p-4 bg-red-50 border border-red-100 rounded-xl">
+           <p className="text-sm text-red-800">{errorText}</p>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-100">
@@ -214,7 +168,9 @@ export function ExamTypes() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filtered.map((exam) =>
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-6 text-slate-500">Cargando...</td></tr>
+              ) : filtered.map((exam) =>
               <tr
                 key={exam.id}
                 className="hover:bg-slate-50/50 transition-colors">
@@ -227,9 +183,8 @@ export function ExamTypes() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[exam.categoria]}`}>
-
-                      {exam.categoria}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${catColors[exam.tipo || 'Otro'] || catColors.Otro}`}>
+                      {exam.tipo || 'Otro'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-500 max-w-xs truncate">
@@ -237,23 +192,20 @@ export function ExamTypes() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${exam.estado === 'Activo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-
-                      {exam.estado}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${exam.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                      {exam.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <button
+                       <button
                       onClick={() => openModal(exam)}
                       className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-
                         <PencilIcon size={15} />
                       </button>
                       <button
                       onClick={() => handleDelete(exam.id)}
                       className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-
                         <TrashIcon size={15} />
                       </button>
                     </div>
@@ -286,7 +238,7 @@ export function ExamTypes() {
                     Código *
                   </label>
                   <input
-                  value={form.codigo}
+                  value={form.codigo || ''}
                   onChange={(e) =>
                   setForm({
                     ...form,
@@ -306,19 +258,13 @@ export function ExamTypes() {
                     Categoría
                   </label>
                   <select
-                  value={form.categoria}
-                  onChange={(e) =>
-                  setForm({
-                    ...form,
-                    categoria: e.target.value as ExamType['categoria']
-                  })
-                  }
+                  value={form.tipo || 'Laboratorio'}
+                  onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-                    <option>Laboratorio</option>
-                    <option>Imagen</option>
-                    <option>Cardiología</option>
-                    <option>Otro</option>
+                    <option value="Laboratorio">Laboratorio</option>
+                    <option value="Imagen">Imagen</option>
+                    <option value="Cardiología">Cardiología</option>
+                    <option value="Otro">Otro</option>
                   </select>
                 </div>
               </div>
@@ -327,31 +273,21 @@ export function ExamTypes() {
                   Nombre del Examen *
                 </label>
                 <input
-                value={form.nombre}
-                onChange={(e) =>
-                setForm({
-                  ...form,
-                  nombre: e.target.value
-                })
-                }
+                value={form.nombre || ''}
+                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.nombre ? 'border-red-400' : 'border-slate-200'}`} />
 
                 {errors.nombre &&
-              <p className="text-red-500 text-xs mt-0.5">{errors.nombre}</p>
-              }
+                  <p className="text-red-500 text-xs mt-0.5">{errors.nombre}</p>
+                }
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
                   Descripción
                 </label>
                 <textarea
-                value={form.descripcion}
-                onChange={(e) =>
-                setForm({
-                  ...form,
-                  descripcion: e.target.value
-                })
-                }
+                value={form.descripcion || ''}
+                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
                 rows={2}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
 
@@ -361,17 +297,11 @@ export function ExamTypes() {
                   Estado
                 </label>
                 <select
-                value={form.estado}
-                onChange={(e) =>
-                setForm({
-                  ...form,
-                  estado: e.target.value as 'Activo' | 'Inactivo'
-                })
-                }
+                value={form.activo ? 'Activo' : 'Inactivo'}
+                onChange={(e) => setForm({ ...form, activo: e.target.value === 'Activo' })}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-                  <option>Activo</option>
-                  <option>Inactivo</option>
+                  <option value="Activo">Activo</option>
+                  <option value="Inactivo">Inactivo</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-2">

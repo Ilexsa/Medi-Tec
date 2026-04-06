@@ -42,9 +42,14 @@ export function Login() {
         throw new Error(result?.message || 'Credenciales inválidas');
       }
 
-      const { access_token, user } = result.data ?? {};
+      const { access_token, user, suscripcion_activa } = result.data ?? {};
       if (!access_token || !user) {
         throw new Error('Respuesta inesperada del servidor (faltan datos).');
+      }
+
+      // Check suscripcion
+      if (user?.rol && user?.rol !== 'SuperAdmin' && !suscripcion_activa) {
+          throw new Error('Suscripción inactiva o vencida. No puede iniciar sesión.');
       }
 
       login(user, access_token, rememberMe);

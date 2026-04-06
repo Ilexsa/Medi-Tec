@@ -1,0 +1,1334 @@
+{
+  "info": {
+    "name": "TecnoMed API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Reemplazar con datos correspondientes para 'LoginRequest'\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Reemplazar con datos correspondientes para 'RegisterRequest'\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes/buscar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes",
+                "buscar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"identificacion\": \"\", // Tipo: string (Requerido)\n  \"tipo_identificacion\": \"\", // Tipo: string (Opcional)\n  \"nombres\": \"\", // Tipo: string (Opcional)\n  \"apellidos\": \"\", // Tipo: string (Opcional)\n  \"fecha_nacimiento\": \"\", // Tipo: string (Requerido)\n  \"genero\": \"\", // Tipo: string (Opcional)\n  \"email\": \"\", // Tipo: *string (Opcional)\n  \"telefono\": \"\", // Tipo: *string (Opcional)\n  \"celular\": \"\", // Tipo: *string (Opcional)\n  \"direccion\": \"\", // Tipo: *string (Opcional)\n  \"ciudad\": \"\", // Tipo: *string (Opcional)\n  \"tipo_sangre\": \"\", // Tipo: *string (Opcional)\n  \"alergias\": \"\", // Tipo: *string (Opcional)\n  \"condiciones_cronicas\": \"\", // Tipo: *string (Opcional)\n  \"contacto_emergencia_nombre\": \"\", // Tipo: *string (Opcional)\n  \"contacto_emergencia_telefono\": \"\", // Tipo: *string (Opcional)\n  \"contacto_emergencia_relacion\": \"\", // Tipo: *string (Opcional)\n  \"aseguradora\": \"\", // Tipo: *string (Opcional)\n  \"numero_seguro\": \"\" // Tipo: *string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"identificacion\": \"\", // Tipo: string (Requerido)\n  \"tipo_identificacion\": \"\", // Tipo: string (Opcional)\n  \"nombres\": \"\", // Tipo: string (Opcional)\n  \"apellidos\": \"\", // Tipo: string (Opcional)\n  \"fecha_nacimiento\": \"\", // Tipo: string (Requerido)\n  \"genero\": \"\", // Tipo: string (Opcional)\n  \"email\": \"\", // Tipo: *string (Opcional)\n  \"telefono\": \"\", // Tipo: *string (Opcional)\n  \"celular\": \"\", // Tipo: *string (Opcional)\n  \"direccion\": \"\", // Tipo: *string (Opcional)\n  \"ciudad\": \"\", // Tipo: *string (Opcional)\n  \"tipo_sangre\": \"\", // Tipo: *string (Opcional)\n  \"alergias\": \"\", // Tipo: *string (Opcional)\n  \"condiciones_cronicas\": \"\", // Tipo: *string (Opcional)\n  \"contacto_emergencia_nombre\": \"\", // Tipo: *string (Opcional)\n  \"contacto_emergencia_telefono\": \"\", // Tipo: *string (Opcional)\n  \"contacto_emergencia_relacion\": \"\", // Tipo: *string (Opcional)\n  \"aseguradora\": \"\", // Tipo: *string (Opcional)\n  \"numero_seguro\": \"\" // Tipo: *string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Eliminar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recetas de Paciente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes/:id/recetas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes",
+                ":id",
+                "recetas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resumen Facturación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/pacientes/:id/facturacion/resumen",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "pacientes",
+                ":id",
+                "facturacion",
+                "resumen"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Citas",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Disponibilidad",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas/disponibilidad",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas",
+                "disponibilidad"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Reemplazar con datos correspondientes para 'CrearCitaRequest'\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Reemplazar con datos correspondientes para 'ActualizarCitaRequest'\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CheckIn",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Sin cuerpo requerido\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas/:id/check-in",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas",
+                ":id",
+                "check-in"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancelar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Sin cuerpo requerido\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/citas/:id/cancelar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "citas",
+                ":id",
+                "cancelar"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultas",
+      "item": [
+        {
+          "name": "Iniciar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"cita_id\": 0, // Tipo: *int64 (Opcional)\n  \"paciente_id\": 0, // Tipo: int64 (Requerido)\n  \"motivo_consulta\": \"\", // Tipo: string (Requerido)\n  \"enfermedad_actual\": \"\", // Tipo: *string (Opcional)\n  \"peso\": 0, // Tipo: *float64 (Opcional)\n  \"talla\": 0, // Tipo: *float64 (Opcional)\n  \"temperatura\": 0, // Tipo: *float64 (Opcional)\n  \"presion_sistolica\": 0, // Tipo: *int (Opcional)\n  \"presion_diastolica\": 0, // Tipo: *int (Opcional)\n  \"frecuencia_cardiaca\": 0, // Tipo: *int (Opcional)\n  \"frecuencia_respiratoria\": 0, // Tipo: *int (Opcional)\n  \"saturacion_oxigeno\": 0 // Tipo: *int (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/consultas/iniciar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "consultas",
+                "iniciar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/consultas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "consultas",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"enfermedad_actual\": \"\", // Tipo: *string (Opcional)\n  \"revision_sistemas\": \"\", // Tipo: *string (Opcional)\n  \"examen_fisico\": \"\", // Tipo: *string (Opcional)\n  \"peso\": 0, // Tipo: *float64 (Opcional)\n  \"talla\": 0, // Tipo: *float64 (Opcional)\n  \"temperatura\": 0, // Tipo: *float64 (Opcional)\n  \"presion_sistolica\": 0, // Tipo: *int (Opcional)\n  \"presion_diastolica\": 0, // Tipo: *int (Opcional)\n  \"frecuencia_cardiaca\": 0, // Tipo: *int (Opcional)\n  \"frecuencia_respiratoria\": 0, // Tipo: *int (Opcional)\n  \"saturacion_oxigeno\": 0, // Tipo: *int (Opcional)\n  \"impresion_diagnostica\": \"\", // Tipo: *string (Opcional)\n  \"plan_tratamiento\": \"\", // Tipo: *string (Opcional)\n  \"evolucion\": \"\", // Tipo: *string (Opcional)\n  \"notas\": \"\" // Tipo: *string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/consultas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "consultas",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Finalizar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Sin cuerpo requerido\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/consultas/:id/finalizar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "consultas",
+                ":id",
+                "finalizar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Agregar Diagnóstico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"cie10_id\": 0, // Tipo: int64 (Opcional)\n  \"tipo_diagnostico\": \"\", // Tipo: *string (Opcional)\n  \"notas\": \"\" // Tipo: *string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/consultas/:id/diagnosticos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "consultas",
+                ":id",
+                "diagnosticos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Turnos",
+      "item": [
+        {
+          "name": "Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/turnos/disponibles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "turnos",
+                "disponibles"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resumen",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/turnos/resumen",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "turnos",
+                "resumen"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Generar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"medico_id\": 0, // Tipo: int64 (Requerido)\n  \"fecha_inicio\": \"\", // Tipo: string (Requerido)\n  \"fecha_fin\": \"\", // Tipo: string (Requerido)\n  \"duracion_slot\": 0, // Tipo: *int64 (Requerido)\n  \"sobrescribir\": false // Tipo: bool (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/turnos/generar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "turnos",
+                "generar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reservar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"turno_id\": 0, // Tipo: int64 (Requerido)\n  \"paciente_id\": 0, // Tipo: *int64 (Opcional)\n  \"tipo_cita\": \"\", // Tipo: *string (Opcional)\n  \"motivo\": \"\", // Tipo: *string (Opcional)\n  \"notas\": \"\" // Tipo: *string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/turnos/reservar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "turnos",
+                "reservar"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Médicos",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nombres\": \"\", // Tipo: string (Requerido)\n  \"apellidos\": \"\", // Tipo: string (Requerido)\n  \"identificacion\": \"\", // Tipo: *string (Opcional)\n  \"email\": \"\", // Tipo: *string (Opcional)\n  \"telefono\": \"\", // Tipo: *string (Opcional)\n  \"especialidad_id\": 0, // Tipo: *int64 (Opcional)\n  \"numero_licencia\": \"\", // Tipo: *string (Opcional)\n  \"titulo_profesional\": \"\", // Tipo: *string (Opcional)\n  \"anios_experiencia\": 0, // Tipo: *int (Opcional)\n  \"biografia\": \"\", // Tipo: *string (Opcional)\n  \"url_foto\": \"\", // Tipo: *string (Opcional)\n  \"usuario_id\": 0, // Tipo: *int64 (Opcional)\n  \"crear_usuario\": false, // Tipo: bool (Opcional)\n  \"usuario_email\": \"\", // Tipo: *string (Opcional)\n  \"usuario_password\": \"\" // Tipo: *string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nombres\": \"\", // Tipo: *string (Opcional)\n  \"apellidos\": \"\", // Tipo: *string (Opcional)\n  \"identificacion\": \"\", // Tipo: *string (Opcional)\n  \"email\": \"\", // Tipo: *string (Opcional)\n  \"telefono\": \"\", // Tipo: *string (Opcional)\n  \"especialidad_id\": 0, // Tipo: *int64 (Opcional)\n  \"numero_licencia\": \"\", // Tipo: *string (Opcional)\n  \"titulo_profesional\": \"\", // Tipo: *string (Opcional)\n  \"anios_experiencia\": 0, // Tipo: *int (Opcional)\n  \"biografia\": \"\", // Tipo: *string (Opcional)\n  \"url_foto\": \"\", // Tipo: *string (Opcional)\n  \"acepta_nuevos_pacientes\": false, // Tipo: *bool (Opcional)\n  \"activo\": false, // Tipo: *bool (Opcional)\n  \"usuario_id\": 0 // Tipo: *int64 (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Eliminar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos",
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear Horario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"dia_semana\": 0, // Tipo: int (Opcional)\n  \"hora_inicio\": \"\", // Tipo: string (Requerido)\n  \"hora_fin\": \"\", // Tipo: string (Requerido)\n  \"duracion_slot\": 0, // Tipo: int (Opcional)\n  \"intervalo_descanso\": 0, // Tipo: *int (Opcional)\n  \"especialidad_id\": 0, // Tipo: *int64 (Opcional)\n  \"fecha_vigencia_desde\": \"\", // Tipo: *string (Opcional)\n  \"fecha_vigencia_hasta\": \"\", // Tipo: *string (Opcional)\n  \"num_turnos_automaticos\": 0 // Tipo: int64 (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos/:id/horarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos",
+                ":id",
+                "horarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Horario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"dia_semana\": 0, // Tipo: *int (Opcional)\n  \"hora_inicio\": \"\", // Tipo: *string (Opcional)\n  \"hora_fin\": \"\", // Tipo: *string (Opcional)\n  \"duracion_slot\": 0, // Tipo: *int (Opcional)\n  \"intervalo_descanso\": 0, // Tipo: *int (Opcional)\n  \"especialidad_id\": 0, // Tipo: *int64 (Opcional)\n  \"fecha_vigencia_desde\": \"\", // Tipo: *string (Opcional)\n  \"fecha_vigencia_hasta\": \"\", // Tipo: *string (Opcional)\n  \"activo\": false, // Tipo: *bool (Opcional)\n  \"num_turnos_automaticos\": 0 // Tipo: *int64 (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos/:id/horarios/:horario_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos",
+                ":id",
+                "horarios",
+                ":horario_id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear Bloqueo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"medico_id\": 0, // Tipo: int64 (Requerido)\n  \"fecha_inicio\": \"\", // Tipo: string (Requerido)\n  \"fecha_fin\": \"\", // Tipo: string (Requerido)\n  \"hora_inicio\": \"\", // Tipo: *string (Opcional)\n  \"hora_fin\": \"\", // Tipo: *string (Opcional)\n  \"tipo_bloqueo\": \"\", // Tipo: string (Opcional)\n  \"motivo\": \"\", // Tipo: *string (Opcional)\n  \"todo_el_dia\": false // Tipo: *bool (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/medicos/:id/bloqueos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "medicos",
+                ":id",
+                "bloqueos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Órdenes Médicas",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/ordenes-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "ordenes-medicas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"consulta_id\": 0, // Tipo: *uint (Opcional)\n  \"paciente_id\": 0, // Tipo: uint (Requerido)\n  \"medico_id\": 0, // Tipo: uint (Requerido)\n  \"diagnostico_presuntivo\": \"\", // Tipo: *string (Opcional)\n  \"observaciones\": \"\", // Tipo: *string (Opcional)\n  \"items\": [] // Tipo: []CrearOrdenItemReq (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/ordenes-medicas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "ordenes-medicas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Anular",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Sin cuerpo requerido\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/ordenes-medicas/:id/anular",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "ordenes-medicas",
+                ":id",
+                "anular"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Procesar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Sin cuerpo requerido\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/ordenes-medicas/:id/procesar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "ordenes-medicas",
+                ":id",
+                "procesar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Agregar Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  // Reemplazar con datos correspondientes para 'AgregarItemOrdenReq'\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/ordenes-medicas/:id/items",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "ordenes-medicas",
+                ":id",
+                "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Resultado",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"resultado\": \"\", // Tipo: string (Requerido)\n  \"fecha_resultado\": \"\" // Tipo: string (Opcional)\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tecno-med/api/v1/ordenes-medicas/:id/items/:item_id/resultado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tecno-med",
+                "api",
+                "v1",
+                "ordenes-medicas",
+                ":id",
+                "items",
+                ":item_id",
+                "resultado"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

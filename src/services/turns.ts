@@ -128,3 +128,15 @@ export async function liberarTurno(turnoId: number): Promise<void> {
   });
   if (res.status !== 'success') throw new Error(res.message || 'Error al liberar el turno');
 }
+
+export async function getTurnosMedicoDia(medicoId: number, fecha: string): Promise<any[]> {
+  const res = await apiFetch<BaseResponse<any[]>>(`/turnos/medico/${medicoId}/dia?fecha=${fecha}`);
+  if (res.status !== 'success') throw new Error(res.message || 'Error al obtener turnos del día');
+  return res.data;
+}
+
+export async function getTurnosMedicoRango(medicoId: number, desde: string, hasta: string): Promise<any[]> {
+  const res = await apiFetch<BaseResponse<any[]>>(`/turnos/medico/${medicoId}/rango?desde=${desde}&hasta=${hasta}`);
+  if (res.status !== 'success') throw new Error(res.message || 'Error al obtener turnos en rango');
+  return res.data;
+}

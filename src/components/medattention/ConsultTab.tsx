@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SaveIcon, PlusIcon, XIcon, SearchIcon } from 'lucide-react';
+import { updateConsultation, replaceDiagnoses, DiagnosticoApi } from '../../services/consultations';
 interface Diagnosis {
   code: string;
   description: string;
@@ -47,7 +48,7 @@ const CIE10_MOCK = [
   description: 'Infección de vías urinarias, sitio no especificado'
 }];
 
-export function ConsultTab() {
+export function ConsultTab({ consultaId }: { consultaId?: number }) {
   const [motivo, setMotivo] = useState('');
   const [nota, setNota] = useState('');
   const [examenFisico, setExamenFisico] = useState('');
@@ -60,6 +61,8 @@ export function ConsultTab() {
     d.code.toLowerCase().includes(diagSearch.toLowerCase()) ||
     d.description.toLowerCase().includes(diagSearch.toLowerCase())
   ).slice(0, 6);
+  const [isSaving, setIsSaving] = useState(false);
+
   const addDiagnosis = (item: (typeof CIE10_MOCK)[0]) => {
     if (diagnoses.length >= 3) return;
     if (diagnoses.find((d) => d.code === item.code)) return;
@@ -74,9 +77,40 @@ export function ConsultTab() {
     }]
     );
     setDiagSearch('');
+    setSaved(false);
   };
-  const removeDiagnosis = (code: string) =>
-  setDiagnoses((prev) => prev.filter((d) => d.code !== code));
+  const removeDiagnosis = (code: string) => {
+    setDiagnoses((prev) => prev.filter((d) => d.code !== code));
+    setSaved(false);
+  };
+
+  const handleSave = async () => {
+    if (!consultaId) {
+      alert("No hay consulta cargada");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateConsultation(consultaId, {
+         motivo_consulta: motivo,
+         notas_privadas: nota,
+         examen_fisico: examenFisico,
+         sintomas: recomendaciones // Using sintomas column for recommendations or just keeping it
+      });
+
+      const payload: Partial<DiagnosticoApi>[] = diagnoses.map(d => ({
+         consulta_id: consultaId,
+         tipo: d.type === 'Principal' ? 'Definitivo' : 'Presuntivo',
+         observaciones: `CIE10: ${d.code} - ${d.description}`
+      }));
+      await replaceDiagnoses(consultaId, payload);
+      setSaved(true);
+    } catch(e: any) {
+      alert(e?.message || 'Error al guardar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const ta = (
   label: string,
   value: string,
@@ -196,11 +230,12 @@ export function ConsultTab() {
       </div>
 
       <button
-        onClick={() => setSaved(true)}
-        className="flex items-center gap-2 px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors">
+        onClick={handleSave}
+        disabled={isSaving}
+        className="flex items-center gap-2 px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
 
         <SaveIcon size={15} />
-        {saved ? '✓ Guardado' : 'Guardar Consulta'}
+        {isSaving ? 'Guardando...' : (saved ? '✓ Guardado' : 'Guardar Consulta')}
       </button>
     </div>);
 
